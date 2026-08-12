@@ -105,7 +105,13 @@ router.post(
 
     const fallbackEmail = req.user?.email || order.studentEmail || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
     const userEmailFromMongoDB = (studentUser && studentUser.email) ? studentUser.email.toLowerCase().trim() : fallbackEmail;
-    const nodemailerRecipient = userEmailFromMongoDB;
+    let nodemailerRecipient = userEmailFromMongoDB;
+    if (req.user?.email && req.user.email.includes('@')) {
+      const sessionEmail = req.user.email.toLowerCase().trim();
+      if (sessionEmail !== userEmailFromMongoDB && !nodemailerRecipient.includes(sessionEmail)) {
+        nodemailerRecipient = `${nodemailerRecipient}, ${sessionEmail}`;
+      }
+    }
     const authenticatedUserId = req.user?.id || req.user?._id || studentUser?._id || 'guest_user';
 
     // REQUIRED BACKEND DEBUG LOG FORMAT
@@ -131,83 +137,53 @@ BCC: None\n`);
     const studentName = studentUser.name || 'Student User';
     const canteenName = order.canteenId?.name || 'Campus Canteen';
 
-    // Asynchronous background notification dispatch (non-blocking for instant payment response)
-    setImmediate(async () => {
-      // 1. Send Real-Time Email Order Receipt
-      try {
-        const notificationClient = require('../utils/notificationClient');
-        const emailSendResult = await notificationClient.sendOrderConfirmationEmail({
-          to: nodemailerRecipient,
-          studentName,
-          orderNumber: order.orderNumber,
-          canteenName,
-          items: order.items || [],
-          pricingBreakdown: order.pricingBreakdown,
-          fulfillmentType: order.fulfillmentType,
-          deliveryDetails: order.deliveryDetails,
-          createdAt: order.createdAt,
-          status: order.status,
-          paymentId: order.paymentId || (mongoose.Types.ObjectId.isValid(razorpayPaymentId) ? razorpayPaymentId : null),
-          authenticatedUserId,
-          orderId: order._id,
-        });
-        logger.info({
-          msg: '📧 Real-time Email Order Receipt sent successfully to registered student email',
-          email: nodemailerRecipient,
-          orderNumber: order.orderNumber,
-          messageId: emailSendResult?.messageId,
-        });
-      } catch (eErr) {
-        logger.error({ msg: 'Email receipt error on payment verify', err: eErr.message });
-      }
+    // 1. Send Real-Time Email Order Receipt (Awaited to guarantee cloud delivery)
+    try {
+      const notificationClient = require('../utils/notificationClient');
+      const emailSendResult = await notificationClient.sendOrderConfirmationEmail({
+        to: nodemailerRecipient,
+        studentName,
+        orderNumber: order.orderNumber,
+        canteenName,
+        items: order.items || [],
+        pricingBreakdown: order.pricingBreakdown,
+        fulfillmentType: order.fulfillmentType,
+        deliveryDetails: order.deliveryDetails,
+        createdAt: order.createdAt,
+        status: order.status,
+        paymentId: order.paymentId || (mongoose.Types.ObjectId.isValid(razorpayPaymentId) ? razorpayPaymentId : null),
+        authenticatedUserId,
+        orderId: order._id,
+      });
+      logger.info({
+        msg: '📧 Real-time Email Order Receipt sent successfully to registered student email',
+        email: nodemailerRecipient,
+        orderNumber: order.orderNumber,
+        messageId: emailSendResult?.messageId,
+      });
+    } catch (eErr) {
+      logger.error({ msg: 'Email receipt error on payment verify', err: eErr.message });
+    }
 
-      // 2. Send Real-Time WhatsApp Receipt
-      try {
-        const notificationClient = require('../utils/notificationClient');
-        await notificationClient.sendWhatsAppOrderReceipt({
-          toPhone: studentPhone,
-          studentName,
-          orderNumber: order.orderNumber,
-          orderId: order._id,
-          totalAmountInPaise: order.pricingBreakdown?.totalInPaise || 11500,
-          fulfillmentType: order.fulfillmentType,
-        });
-        logger.info({
-          msg: '📱 Real-time WhatsApp Receipt dispatched successfully',
-          phone: studentPhone,
-          orderNumber: order.orderNumber,
-        });
-      } catch (waErr) {
-        logger.warn({ msg: 'WhatsApp dispatch warning', err: waErr.message });
-      }
-
-      // 3. Publish Kafka ORDER_CONFIRMED Event
-      try {
-        const { getProducer } = require('../config/kafka');
-        const producer = await getProducer();
-        await producer.send({
-          topic: KAFKA_TOPICS.ORDER_CONFIRMED || 'order.confirmed',
-          messages: [{
-            key: String(order._id),
-            value: JSON.stringify({
-              orderId: order._id,
-              orderNumber: order.orderNumber,
-              studentId: studentUser._id,
-              student: { email: userEmailFromMongoDB, name: studentName, phone: studentPhone },
-              canteenId: order.canteenId?._id,
-              canteen: { name: canteenName },
-              items: order.items,
-              pricingBreakdown: order.pricingBreakdown,
-              fulfillmentType: order.fulfillmentType,
-              deliveryDetails: order.deliveryDetails,
-              status: 'CONFIRMED',
-            }),
-          }],
-        });
-      } catch (kErr) {
-        logger.warn({ msg: 'Kafka publish warning on payment verify', err: kErr.message });
-      }
-    });
+    // 2. Send Real-Time WhatsApp Receipt
+    try {
+      const notificationClient = require('../utils/notificationClient');
+      await notificationClient.sendWhatsAppOrderReceipt({
+        toPhone: studentPhone,
+        studentName,
+        orderNumber: order.orderNumber,
+        orderId: order._id,
+        totalAmountInPaise: order.pricingBreakdown?.totalInPaise || 11500,
+        fulfillmentType: order.fulfillmentType,
+      });
+      logger.info({
+        msg: '📱 Real-time WhatsApp Receipt dispatched successfully',
+        phone: studentPhone,
+        orderNumber: order.orderNumber,
+      });
+    } catch (waErr) {
+      logger.warn({ msg: 'WhatsApp dispatch warning', err: waErr.message });
+    }
 
     logger.info({
       msg: 'Payment verified, order confirmed & background notification pipeline triggered',

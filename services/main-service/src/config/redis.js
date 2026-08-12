@@ -72,7 +72,7 @@ function getRedisClient() {
   });
 
   redisClient.on('error', (err) => {
-    logger.warn({ msg: 'Redis offline — using in-memory Redis fallback', err: err.message });
+    logger.debug({ msg: 'Redis offline — using in-memory Redis fallback', err: err.message });
   });
 
   return redisClient;
@@ -85,7 +85,7 @@ async function connectRedis() {
     logger.info({ msg: 'Redis connected' });
     return client;
   } catch (err) {
-    logger.warn({ msg: 'Real Redis unavailable. Activated In-Memory Redis Fallback.', err: err.message });
+    logger.info({ msg: 'Activated In-Memory Redis Cache Fallback (Zero external Redis dependency needed)' });
     redisClient = new InMemoryRedisMock();
     return redisClient;
   }

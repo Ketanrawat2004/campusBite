@@ -111,5 +111,31 @@
     "createdAt": "2026-08-11T11:52:21.866Z",
     "updatedAt": "2026-08-11T11:52:21.866Z",
     "__v": 0
+  },
+  {
+    "collegeId": "6a7c3dee3f230cec1226baaf",
+    "name": "Devashish Kumar",
+    "email": "devashishkd111@gmail.com",
+    "passwordHash": "$2a$12$iZyuKdGybsu3QfN8nnIb8elc8sjze.armt8H9firQMCOz.oJmQMrm",
+    "phone": "7489898361",
+    "role": "STUDENT",
+    "isVerified": true,
+    "isActive": true,
+    "emailVerificationToken": "062699c0cb673c04648fc51f78cb961f746509ec6acbc1b8bdc7104bd0605993",
+    "emailVerificationExpires": "2026-08-13T10:06:18.786Z",
+    "studentProfile": {
+      "rollNumber": "2023UGEC111",
+      "hostelId": "6a7c3dee3f230cec1226bab8",
+      "roomNumber": "B-412",
+      "year": 4
+    },
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a7c459a16b0f163e49106a0",
+    "createdAt": "2026-08-12T10:06:18.792Z",
+    "updatedAt": "2026-08-12T10:06:18.792Z",
+    "__v": 0
   }
 ]

@@ -8,7 +8,7 @@ const REFRESH_COOKIE_NAME = 'campusbite_refresh';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
 };
 
@@ -18,7 +18,6 @@ const COOKIE_OPTIONS = {
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
 
-  // Set httpOnly refresh cookie
   res.cookie(REFRESH_COOKIE_NAME, result.refreshToken, COOKIE_OPTIONS);
 
   res.status(201).json({
@@ -27,6 +26,7 @@ const register = asyncHandler(async (req, res) => {
     data: {
       user: result.user,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     },
   });
 });
@@ -45,6 +45,7 @@ const login = asyncHandler(async (req, res) => {
     data: {
       user: result.user,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     },
   });
 });
@@ -53,8 +54,7 @@ const login = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/refresh
  */
 const refresh = asyncHandler(async (req, res) => {
-  // Get refresh token from cookie or body
-  const rawToken = req.cookies[REFRESH_COOKIE_NAME] || req.body?.refreshToken;
+  const rawToken = req.cookies[REFRESH_COOKIE_NAME] || req.body?.refreshToken || req.headers['x-refresh-token'];
 
   const result = await authService.refreshAccessToken(rawToken);
 
@@ -64,6 +64,7 @@ const refresh = asyncHandler(async (req, res) => {
     success: true,
     data: {
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       user: result.user,
     },
   });
@@ -125,6 +126,7 @@ const googleAuth = asyncHandler(async (req, res) => {
     data: {
       user: result.user,
       accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
     },
   });
 });

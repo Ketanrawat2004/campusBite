@@ -291,12 +291,14 @@ async function sendOrderConfirmationEmail({
 
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: { user: smtpUser, pass: smtpPass },
       tls: { rejectUnauthorized: false },
-      connectionTimeout: 25000,
-      greetingTimeout: 25000,
-      socketTimeout: 25000,
+      connectionTimeout: 20000,
+      greetingTimeout: 20000,
+      socketTimeout: 20000,
     });
 
     const fromAddress = process.env.EMAIL_FROM || `CampusBite <${smtpUser}>`;

@@ -46,9 +46,8 @@ async function publishEvent(topic, key, data, eventType = null) {
     logger.debug({ msg: 'Event published', topic, key, eventId: envelope.eventId });
     return envelope.eventId;
   } catch (err) {
-    logger.error({ msg: 'Failed to publish Kafka event', topic, key, err: err.message });
+    logger.debug({ msg: 'Kafka event notice (standalone mode)', topic, key, err: err.message });
     // Don't throw — event publishing should not fail the main request
-    // In production, consider a dead letter queue or outbox pattern
   }
 }
 

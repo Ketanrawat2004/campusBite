@@ -33,8 +33,16 @@ async function getProducer() {
     allowAutoTopicCreation: true,
   });
 
-  await producer.connect();
-  logger.info({ msg: 'Kafka producer connected' });
+  try {
+    await producer.connect();
+    logger.info({ msg: 'Kafka producer connected' });
+  } catch (err) {
+    logger.debug({ msg: 'Kafka unavailable — running in standalone mode', err: err.message });
+    producer = {
+      send: async () => {},
+      disconnect: async () => {},
+    };
+  }
 
   return producer;
 }

@@ -54,8 +54,16 @@ axiosClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const { data } = await axiosClient.post('/auth/refresh');
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+        const { data } = await axiosClient.post(
+          '/auth/refresh',
+          { refreshToken: storedRefreshToken },
+          { headers: { 'x-refresh-token': storedRefreshToken || '' } }
+        );
         const newToken = data.data.accessToken;
+        if (data.data?.refreshToken) {
+          localStorage.setItem('refreshToken', data.data.refreshToken);
+        }
         localStorage.setItem('accessToken', newToken);
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -63,6 +71,7 @@ axiosClient.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

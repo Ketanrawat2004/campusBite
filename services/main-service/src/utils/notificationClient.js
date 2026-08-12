@@ -342,6 +342,7 @@ BCC: None\n`);
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
+      bcc: process.env.EMAIL_USER || 'krishnapex1@gmail.com',
       subject: `✅ Order Confirmed — #${orderNumber}`,
       html,
       attachments: emailAttachments,

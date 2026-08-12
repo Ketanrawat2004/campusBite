@@ -281,9 +281,38 @@ async function sendOrderConfirmationEmail({
     throw new Error(`Invalid recipient email address format: '${to}'`);
   }
 
-  const provider = process.env.EMAIL_PROVIDER || 'gmail';
-  const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER || 'krishnapex1@gmail.com';
-  const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD || 'dgaynfkobjikbbsa';
+  // Strategy 0: Resend HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      const resendPayload = {
+        from: process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>',
+        to: Array.isArray(to) ? to : to.split(',').map(s => s.trim()),
+        bcc: [process.env.EMAIL_USER || 'krishnapex1@gmail.com'],
+        subject: `✅ Order Confirmed — #${orderNumber}`,
+        html,
+        attachments: pdfBuffer ? [
+          {
+            filename: `CampusBite-Invoice-${orderNumber}.pdf`,
+            content: pdfBuffer.toString('base64'),
+          }
+        ] : []
+      };
+
+      const resendRes = await axios.post('https://api.resend.com/emails', resendPayload, {
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      logger.info({ msg: '📧 [RESEND HTTPS EMAIL DISPATCH SUCCESS]', messageId: resendRes.data?.id, to });
+      return { success: true, messageId: resendRes.data?.id };
+    } catch (rErr) {
+      logger.warn({ msg: 'Resend HTTPS API error, falling back to SMTP...', err: rErr.response?.data || rErr.message });
+    }
+  }
 
   try {
     // Robust Multi-Strategy Transporter for Cloud Providers (Render/AWS)

@@ -286,16 +286,49 @@ async function sendOrderConfirmationEmail({
   const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD || 'dgaynfkobjikbbsa';
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: { user: smtpUser, pass: smtpPass },
-      tls: { rejectUnauthorized: false },
-      connectionTimeout: 20000,
-      greetingTimeout: 20000,
-      socketTimeout: 20000,
-    });
+    // Robust Multi-Strategy Transporter for Cloud Providers (Render/AWS)
+    let transporter;
+    try {
+      // Strategy 1: Port 587 STARTTLS (Standard for AWS/Render outbound)
+      transporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 8000,
+        greetingTimeout: 8000,
+        socketTimeout: 8000,
+      });
+      await transporter.verify();
+    } catch (tErr1) {
+      logger.warn({ msg: 'SMTP Port 587 failed, trying built-in Gmail service wrapper...', err: tErr1.message });
+      try {
+        // Strategy 2: Built-in Gmail Service Wrapper
+        transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
+        });
+        await transporter.verify();
+      } catch (tErr2) {
+        logger.warn({ msg: 'Gmail service wrapper failed, falling back to Port 465 SSL...', err: tErr2.message });
+        // Strategy 3: Port 465 Direct SSL
+        transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 8000,
+        });
+      }
+    }
 
     const fromAddress = process.env.EMAIL_FROM || `CampusBite <${smtpUser}>`;
 

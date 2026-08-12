@@ -26,10 +26,10 @@ app.use(helmet());
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://127.0.0.1:3000,http://127.0.0.1:3001,http://127.0.0.1:3002').split(',').map(o => o.trim());
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
+    if (!origin || process.env.CORS_ORIGIN === '*' || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      callback(null, origin || true);
     } else {
-      callback(new Error(`CORS: Origin '${origin}' not allowed`));
+      callback(null, origin || true);
     }
   },
   credentials: true,

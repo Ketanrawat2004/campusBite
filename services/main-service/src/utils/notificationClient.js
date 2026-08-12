@@ -282,12 +282,8 @@ async function sendOrderConfirmationEmail({
   }
 
   const provider = process.env.EMAIL_PROVIDER || 'gmail';
-  const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
-
-  if (!smtpUser || !smtpPass) {
-    throw new Error('Email credentials (EMAIL_USER / EMAIL_PASS) not configured in .env');
-  }
+  const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER || 'krishnapex1@gmail.com';
+  const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD || 'dgaynfkobjikbbsa';
 
   try {
     const transporter = nodemailer.createTransport({

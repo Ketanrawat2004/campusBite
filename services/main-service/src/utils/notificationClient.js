@@ -76,8 +76,8 @@ async function sendOrderConfirmationEmail({
 
   const fulfillmentLocation = fulfillmentType === 'DELIVERY'
     ? (deliveryDetails?.hostelName
-        ? `Hostel Delivery (${deliveryDetails.hostelName}${deliveryDetails.roomNumber ? `, Room ${deliveryDetails.roomNumber}` : ''})`
-        : 'Hostel Delivery')
+      ? `Hostel Delivery (${deliveryDetails.hostelName}${deliveryDetails.roomNumber ? `, Room ${deliveryDetails.roomNumber}` : ''})`
+      : 'Hostel Delivery')
     : 'Counter Pickup';
 
   const itemRowsHtml = items.length > 0
@@ -280,6 +280,9 @@ async function sendOrderConfirmationEmail({
   if (!to || typeof to !== 'string' || !to.includes('@') || !to.includes('.')) {
     throw new Error(`Invalid recipient email address format: '${to}'`);
   }
+
+  const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER;
+  const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
 
   // Strategy 0: Resend HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
   const resendApiKey = process.env.RESEND_API_KEY;

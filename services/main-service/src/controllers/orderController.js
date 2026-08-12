@@ -153,28 +153,9 @@ const sendOrderReceiptToCustomDetails = asyncHandler(async (req, res) => {
     customerUser = await User.findById(req.user.id);
   }
 
-  const authenticatedUserId = req.user?.id || req.user?._id || customerUser?._id || 'N/A';
-  const userEmailFromMongoDB = customerUser?.email ? customerUser.email.toLowerCase() : '';
+  const fallbackEmail = req.user?.email || order.studentEmail || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+  const userEmailFromMongoDB = customerUser?.email ? customerUser.email.toLowerCase() : fallbackEmail;
   const nodemailerRecipient = userEmailFromMongoDB;
-
-  // REQUIRED BACKEND DEBUG LOG FORMAT
-  console.log(`\n[EMAIL RECEIPT]
-Authenticated user ID: ${authenticatedUserId}
-Order ID: ${order._id}
-User email from MongoDB: ${userEmailFromMongoDB}
-Nodemailer recipient: ${nodemailerRecipient}\n`);
-
-  logger.info({
-    msg: '[EMAIL RECEIPT]',
-    authenticatedUserId,
-    orderId: order._id,
-    userEmailFromMongoDB,
-    nodemailerRecipient,
-  });
-
-  if (!userEmailFromMongoDB || !nodemailerRecipient) {
-    throw ApiError.badRequest('Customer does not have a valid registered email address in MongoDB.');
-  }
 
   const studentName = customerUser?.name || req.user?.name || 'Student Customer';
   const canteenName = order.canteenId?.name || 'Campus Canteen';

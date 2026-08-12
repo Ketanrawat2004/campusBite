@@ -63,6 +63,14 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ─── Routes ───────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: '🍱 CampusBite API Gateway Server is Live & Running!',
+    health: '/api/v1/health',
+    version: 'v1',
+  });
+});
 app.use('/api/v1', router);
 
 // ─── 404 handler ─────────────────────────────────────────────────

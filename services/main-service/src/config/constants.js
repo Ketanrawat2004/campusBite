@@ -1,0 +1,139 @@
+'use strict';
+
+const ORDER_STATUS = Object.freeze({
+  PENDING_PAYMENT: 'PENDING_PAYMENT',
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  CONFIRMED: 'CONFIRMED',
+  CANCELLED: 'CANCELLED',
+  REJECTED: 'REJECTED',
+  PREPARING: 'PREPARING',
+  READY: 'READY',
+  ASSIGNED: 'ASSIGNED',
+  PICKED_UP: 'PICKED_UP',
+  OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+  DELIVERED: 'DELIVERED',
+  COMPLETED: 'COMPLETED',
+  REFUND_PENDING: 'REFUND_PENDING',
+  REFUNDED: 'REFUNDED',
+});
+
+const VALID_ORDER_TRANSITIONS = Object.freeze({
+  [ORDER_STATUS.PENDING_PAYMENT]: [
+    ORDER_STATUS.PAYMENT_FAILED,
+    ORDER_STATUS.CONFIRMED,
+    ORDER_STATUS.CANCELLED,
+  ],
+  [ORDER_STATUS.CONFIRMED]: [
+    ORDER_STATUS.CANCELLED,
+    ORDER_STATUS.REJECTED,
+    ORDER_STATUS.PREPARING,
+  ],
+  [ORDER_STATUS.REJECTED]: [ORDER_STATUS.REFUND_PENDING],
+  [ORDER_STATUS.PREPARING]: [ORDER_STATUS.READY, ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.READY]: [ORDER_STATUS.ASSIGNED, ORDER_STATUS.OUT_FOR_DELIVERY, ORDER_STATUS.COMPLETED, ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.ASSIGNED]: [ORDER_STATUS.PICKED_UP],
+  [ORDER_STATUS.PICKED_UP]: [ORDER_STATUS.OUT_FOR_DELIVERY],
+  [ORDER_STATUS.OUT_FOR_DELIVERY]: [ORDER_STATUS.DELIVERED],
+  [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.COMPLETED, ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.COMPLETED]: [ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.REFUND_PENDING]: [ORDER_STATUS.REFUNDED],
+  [ORDER_STATUS.PAYMENT_FAILED]: [],
+  [ORDER_STATUS.CANCELLED]: [],
+  [ORDER_STATUS.REFUNDED]: [],
+});
+
+const PAYMENT_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+  PARTIALLY_REFUNDED: 'PARTIALLY_REFUNDED',
+});
+
+const DELIVERY_BATCH_STATUS = Object.freeze({
+  FORMING: 'FORMING',
+  READY: 'READY',
+  ASSIGNED: 'ASSIGNED',
+  PICKED_UP: 'PICKED_UP',
+  OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+});
+
+const USER_ROLES = Object.freeze({
+  STUDENT: 'STUDENT',
+  CANTEEN_STAFF: 'CANTEEN_STAFF',
+  DELIVERY_PARTNER: 'DELIVERY_PARTNER',
+  ADMIN: 'ADMIN',
+});
+
+const FULFILLMENT_TYPE = Object.freeze({
+  PICKUP: 'PICKUP',
+  DELIVERY: 'DELIVERY',
+});
+
+const NOTIFICATION_TYPES = Object.freeze({
+  ORDER_CONFIRMED: 'ORDER_CONFIRMED',
+  ORDER_PREPARING: 'ORDER_PREPARING',
+  ORDER_READY: 'ORDER_READY',
+  ORDER_DELIVERED: 'ORDER_DELIVERED',
+  BATCH_ASSIGNED: 'BATCH_ASSIGNED',
+  PAYMENT_SUCCESS: 'PAYMENT_SUCCESS',
+  PAYMENT_FAILED: 'PAYMENT_FAILED',
+  REFUND_INITIATED: 'REFUND_INITIATED',
+  REFUND_COMPLETED: 'REFUND_COMPLETED',
+  GENERAL: 'GENERAL',
+});
+
+const KAFKA_TOPICS = Object.freeze({
+  ORDER_CREATED: 'order.created',
+  ORDER_CONFIRMED: 'order.confirmed',
+  ORDER_CANCELLED: 'order.cancelled',
+  ORDER_REJECTED: 'order.rejected',
+  ORDER_STATUS_UPDATED: 'order.status.updated',
+  ORDER_READY: 'order.ready',
+  PAYMENT_COMPLETED: 'payment.completed',
+  PAYMENT_FAILED: 'payment.failed',
+  REFUND_INITIATED: 'refund.initiated',
+  REFUND_COMPLETED: 'refund.completed',
+  DELIVERY_BATCH_CREATED: 'delivery.batch.created',
+  DELIVERY_ASSIGNED: 'delivery.assigned',
+  DELIVERY_PICKED_UP: 'delivery.picked_up',
+  DELIVERY_COMPLETED: 'delivery.completed',
+  NOTIFICATION_SEND: 'notification.send',
+  EMAIL_SEND: 'email.send',
+  ANALYTICS_EVENT: 'analytics.event',
+});
+
+const REDIS_KEYS = Object.freeze({
+  canteenMenu: (canteenId) => `canteen:${canteenId}:menu`,
+  rateLimit: (endpoint, id) => `rate:${endpoint}:${id}`,
+  deliveryBatchLock: (batchId) => `lock:delivery-batch:${batchId}`,
+  groupingLock: (canteenId, hostelId, windowKey) =>
+    `lock:grouping:${canteenId}:${hostelId}:${windowKey}`,
+  groupingActive: (canteenId, hostelId, windowKey) =>
+    `grouping:active:${canteenId}:${hostelId}:${windowKey}`,
+  eventProcessed: (eventId) => `event:processed:${eventId}`,
+});
+
+const CACHE_TTL = Object.freeze({
+  MENU: 300,          // 5 minutes
+  RATE_LIMIT: 60,     // 1 minute default
+  BATCH_LOCK: 10,     // 10 seconds
+  GROUPING_LOCK: 5,   // 5 seconds
+  GROUPING_WINDOW: 3600, // 1 hour
+  EVENT_IDEMPOTENCY: 86400, // 24 hours
+});
+
+module.exports = {
+  ORDER_STATUS,
+  VALID_ORDER_TRANSITIONS,
+  PAYMENT_STATUS,
+  DELIVERY_BATCH_STATUS,
+  USER_ROLES,
+  FULFILLMENT_TYPE,
+  NOTIFICATION_TYPES,
+  KAFKA_TOPICS,
+  REDIS_KEYS,
+  CACHE_TTL,
+};

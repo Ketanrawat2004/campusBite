@@ -1,0 +1,42 @@
+Path,Component/Module,Type,Port/Stack,Description
+CampusBite,Root Ecosystem,Directory,Monorepo Architecture,Enterprise Event-Driven Campus Food Delivery Platform for NIT Jamshedpur
+CampusBite/frontend,Frontend Layer,Directory,React 18 + Vite,Client-facing web applications monorepo
+CampusBite/frontend/student,Student Web Portal,Application,Port 3000 (React + Vite),Student ordering portal for hostel delivery and canteen pickup
+CampusBite/frontend/student/src,Student Source,Directory,JavaScript / JSX,Source code for student web application
+CampusBite/frontend/student/src/api,API Layer,Directory,Axios Client,Axios client configuration with JWT interceptors
+CampusBite/frontend/student/src/components,UI Components,Directory,React Components,Navbar Cart Drawer Footer & Reusable UI Modals
+CampusBite/frontend/student/src/context,State Management,Directory,React Context API,Auth Context & Shopping Cart State Context
+CampusBite/frontend/student/src/pages,Page Views,Directory,React Pages,Home Canteens Menu Checkout OrderTracking History Login Register
+CampusBite/frontend/student/src/App.jsx,App Router,File,React Router v6,Master routes and layout wrapper for student portal
+CampusBite/frontend/student/src/main.jsx,Entry Point,File,Vite Entry,Vite application entry point and DOM renderer
+CampusBite/frontend/student/public,Public Assets,Directory,Static Media,Logos campus hero photos & vector icons
+CampusBite/frontend/student/package.json,Manifest,File,NPM Config,Package dependencies and Vite build scripts
+CampusBite/frontend/canteen,Kitchen Staff Portal,Application,Port 3001 (React + Vite),Canteen kitchen queue store status control & live SVG analytics
+CampusBite/frontend/canteen/src/App.jsx,Canteen Main,File,React + Web Audio,Real-time order queue status mode switcher & SVG analytics dashboard
+CampusBite/frontend/canteen/src/main.jsx,Canteen Entry,File,Vite Entry,Vite entry point for kitchen staff portal
+CampusBite/frontend/admin,Admin Console,Application,Port 3002 (React + Vite),Executive metrics dashboard revenue analytics & order monitoring
+CampusBite/frontend/admin/src/App.jsx,Admin Main,File,React + Charts,Admin executive dashboard analytics and order management
+CampusBite/backend,Backend Core,Directory,Node.js + Express,Core REST API Gateway & Business Engine
+CampusBite/backend/src,Backend Source,Directory,Node.js,Source code for core API gateway and backend services
+CampusBite/backend/src/config,Configuration,Directory,Node.js Modules,MongoDB Redis Kafka Google OAuth & Constants config
+CampusBite/backend/src/controllers,HTTP Controllers,Directory,Express Handlers,Auth Order Canteen Menu Payment & Profile controllers
+CampusBite/backend/src/middleware,Middleware,Directory,Express Middleware,JWT Auth Role-Based Access Control (RBAC) & Rate Limiter
+CampusBite/backend/src/models,Database Models,Directory,Mongoose ODM,User Canteen MenuItem Order Hostel & Delivery schemas
+CampusBite/backend/src/routes,REST Routes,Directory,Express Router,Versioned REST API Endpoints (/api/v1/*)
+CampusBite/backend/src/services,Business Logic,Directory,Service Layer,Order processing canteen management & invoice PDF engine
+CampusBite/backend/src/consumers,Kafka Consumers,Directory,KafkaJS,Kafka message stream consumer subscriptions
+CampusBite/backend/src/utils,Utilities,Directory,Helper Functions,PDF Invoice generator Nodemailer WhatsApp dispatcher & Logger
+CampusBite/backend/src/app.js,Express App,File,Express Setup,Express middleware configuration and route binding
+CampusBite/backend/src/server.js,HTTP Server,File,Port 4000,Backend HTTP server initialization and database connection
+CampusBite/backend/scripts,Data Scripts,Directory,Node.js Scripts,Automatic MongoDB data seeding with 7 campus canteens
+CampusBite/backend/Dockerfile,Container Config,File,Docker,Docker container definition for backend REST API
+CampusBite/backend/package.json,Backend Manifest,File,NPM Config,Backend dependencies scripts and runtime configuration
+CampusBite/services,Microservices,Directory,Node.js Services,Event-driven distributed microservices architecture
+CampusBite/services/canteen-service,Canteen Microservice,Service,Port 4001 (Node.js),Dedicated canteen queue & inventory microservice
+CampusBite/services/admin-service,Admin Microservice,Service,Port 4002 (Node.js),Dedicated admin metrics & analytics microservice
+CampusBite/services/payment-service,Payment Microservice,Service,Port 4003 (Node.js),Dedicated Razorpay integration microservice
+CampusBite/services/notification-service,Notification Microservice,Service,Background Worker,Real-time Email (SMTP) & WhatsApp (Meta Cloud) dispatcher
+CampusBite/docker-compose.yml,Orchestration,File,Docker Compose,Production multi-container orchestration configuration
+CampusBite/README.md,Documentation,File,Markdown,Platform architecture manual deployment guide & API specs
+CampusBite/.gitignore,Version Control,File,Git,Git ignore rules for node_modules build outputs & secrets
+CampusBite/.env.example,Environment Spec,File,Config,Environment variable templates and default port definitions

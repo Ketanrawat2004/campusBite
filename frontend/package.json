@@ -1,0 +1,10 @@
+{
+  "name": "campusbite-frontend",
+  "private": true,
+  "scripts": {
+    "dev:student": "cd student && npm run dev",
+    "dev:canteen": "cd canteen && npm run dev",
+    "dev:admin": "cd admin && npm run dev",
+    "install:all": "npm install --prefix student && npm install --prefix canteen && npm install --prefix admin"
+  }
+}

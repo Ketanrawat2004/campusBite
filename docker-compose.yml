@@ -1,0 +1,351 @@
+version: '3.9'
+
+# 🍱 CampusBite — Enterprise Microservices Orchestration Spec
+# Redesigned from scratch for production & development isolation
+
+networks:
+  campusbite-network:
+    name: campusbite-network
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    name: campusbite_mongodb_data
+  redis_data:
+    name: campusbite_redis_data
+
+services:
+
+  # ─────────────────────────────────────────────────────────────
+  # 🏛️ INFRASTRUCTURE LAYER (Databases, Caches & Event Streaming)
+  # ─────────────────────────────────────────────────────────────
+
+  mongodb:
+    image: mongo:7
+    container_name: campusbite-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-campusbite_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS:-campusbite_pass}
+      MONGO_INITDB_DATABASE: campusbite
+    networks:
+      - campusbite-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: campusbite-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis_pass}
+    volumes:
+      - redis_data:/data
+    networks:
+      - campusbite-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: campusbite-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: campusbite-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+    networks:
+      - campusbite-network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+
+  # ─────────────────────────────────────────────────────────────
+  # ⚙️ BACKEND MICROSERVICES LAYER (Express.js Servers)
+  # ─────────────────────────────────────────────────────────────
+
+  main-service:
+    build:
+      context: ./services/main-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-main-service
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./services/main-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/main-service/.env
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+      CANTEEN_SERVICE_URL: http://canteen-service:4001
+      ADMIN_SERVICE_URL: http://admin-service:4002
+      PAYMENT_SERVICE_URL: http://payment-service:4003/api/v1
+      NOTIFICATION_SERVICE_URL: http://notification-service:4004/api/v1
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  canteen-service:
+    build:
+      context: ./services/canteen-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-canteen-service
+    ports:
+      - "4001:4001"
+    volumes:
+      - ./services/canteen-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/canteen-service/.env
+    environment:
+      PORT: 4001
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+      STUDENT_SERVICE_URL: http://main-service:4000
+      ADMIN_SERVICE_URL: http://admin-service:4002
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  admin-service:
+    build:
+      context: ./services/admin-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-admin-service
+    ports:
+      - "4002:4002"
+    volumes:
+      - ./services/admin-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/admin-service/.env
+    environment:
+      PORT: 4002
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+      STUDENT_SERVICE_URL: http://main-service:4000
+      CANTEEN_SERVICE_URL: http://canteen-service:4001
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-payment-service
+    ports:
+      - "4003:4003"
+    volumes:
+      - ./services/payment-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/payment-service/.env
+    environment:
+      PORT: 4003
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-notification-service
+    ports:
+      - "4004:4004"
+    volumes:
+      - ./services/notification-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/notification-service/.env
+    environment:
+      PORT: 4004
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./services/main-service
+      dockerfile: Dockerfile
+      target: development
+    container_name: campusbite-worker
+    volumes:
+      - ./services/main-service:/app
+      - /app/node_modules
+    env_file:
+      - ./services/main-service/.env
+    environment:
+      MONGODB_URI: mongodb://${MONGO_ROOT_USER:-campusbite_admin}:${MONGO_ROOT_PASS:-campusbite_pass}@mongodb:27017/campusbite?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_pass}@redis:6379
+      KAFKA_BROKERS: kafka:9092
+    command: ["npm", "run", "worker:dev"]
+    depends_on:
+      main-service:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+
+  # ─────────────────────────────────────────────────────────────
+  # 🎨 FRONTEND WEB APPLICATIONS LAYER (React + Vite Apps)
+  # ─────────────────────────────────────────────────────────────
+
+  student-frontend:
+    build:
+      context: ./frontend/student
+      dockerfile: Dockerfile
+    container_name: campusbite-student-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/student:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+      VITE_CANTEEN_API_URL: http://localhost:4001/api/v1
+      VITE_ADMIN_API_URL: http://localhost:4002/api/v1
+      VITE_PAYMENT_API_URL: http://localhost:4003/api/v1
+      VITE_NOTIFICATION_API_URL: http://localhost:4004/api/v1
+      VITE_RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_placeholder}
+      VITE_GOOGLE_CLIENT_ID: 362637227231-utbl0j3a1kh2aprj335g9ru1god9ospj.apps.googleusercontent.com
+    depends_on:
+      - main-service
+      - canteen-service
+      - admin-service
+      - payment-service
+      - notification-service
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  canteen-frontend:
+    build:
+      context: ./frontend/canteen
+      dockerfile: Dockerfile
+    container_name: campusbite-canteen-frontend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./frontend/canteen:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:4001/api/v1
+      VITE_GOOGLE_CLIENT_ID: 362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com
+    depends_on:
+      - canteen-service
+    networks:
+      - campusbite-network
+    restart: unless-stopped
+
+  admin-frontend:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile
+    container_name: campusbite-admin-frontend
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./frontend/admin:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:4002/api/v1
+      VITE_GOOGLE_CLIENT_ID: 362637227231-3gc8jb77hjelql3a4n5iva9222jrkph3.apps.googleusercontent.com
+    depends_on:
+      - admin-service
+    networks:
+      - campusbite-network
+    restart: unless-stopped

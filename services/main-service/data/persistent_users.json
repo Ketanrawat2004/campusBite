@@ -1,0 +1,115 @@
+[
+  {
+    "studentProfile": {
+      "rollNumber": "2023UGEC116",
+      "roomNumber": "B-417",
+      "year": 4
+    },
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a786cc5aa2de878f2d3ab22",
+    "collegeId": "6a786c47aa2de878f2d3aab8",
+    "name": "Ketan Rawat",
+    "email": "krishnapex1@gmail.com",
+    "passwordHash": "$2a$12$vBFvvRBKDXNUVK8HaQlRVue3E5bKT8ohea5cIHdEvz5VO55ePPudO",
+    "phone": "7489898361",
+    "role": "ADMIN",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": "2026-08-09T12:04:21.232Z",
+    "updatedAt": "2026-08-10T14:32:59.585Z",
+    "__v": 0,
+    "avatarUrl": "https://lh3.googleusercontent.com/a/ACg8ocK4XuwLyerxWTc6isxmRMn9nzT12T4KkaOU0bKC1GW9AqjUfB7k=s96-c",
+    "googleId": "109266243973791796997"
+  },
+  {
+    "studentProfile": {
+      "rollNumber": "2023UGEC116",
+      "hostelId": "6a79bbf31b916814bbee3985",
+      "roomNumber": "B-417",
+      "year": 4
+    },
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a7a2da46b7e503418a69e97",
+    "collegeId": "6a79bbf31b916814bbee397f",
+    "name": "Ketan Rawat",
+    "email": "ketanrawat2004@gmail.com",
+    "passwordHash": "$2a$12$MG9yHcQxMq2R7Eft36lRhe7PZVDNEIFYR.D0k/y6kiMQ5Wd2wpPfu",
+    "phone": "7489898361",
+    "role": "STUDENT",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": "2026-08-10T19:59:32.850Z",
+    "updatedAt": "2026-08-11T07:00:27.823Z",
+    "__v": 0
+  },
+  {
+    "collegeId": "6a78afdfaf6555b7aba1bbfa",
+    "name": "Google Student",
+    "email": "student.google@nitjsr.ac.in",
+    "passwordHash": "$2a$12$rdX/VoshSg0dleGVCbsix.F0YMxrqCV2RqbEDSCi4/NWaV.yZma1G",
+    "phone": "9876543210",
+    "googleId": "google_demo_id_9988776655",
+    "avatarUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+    "role": "STUDENT",
+    "isVerified": true,
+    "isActive": true,
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a78afe1af6555b7aba1bc85",
+    "createdAt": "2026-08-09T16:50:41.967Z",
+    "updatedAt": "2026-08-09T16:50:41.967Z",
+    "__v": 0
+  },
+  {
+    "studentProfile": {
+      "rollNumber": "2023UGEC116",
+      "hostelId": "6a79bbf31b916814bbee3985",
+      "roomNumber": "B-417",
+      "year": 4
+    },
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a7a2da46b7e503418a69e97",
+    "collegeId": "6a79bbf31b916814bbee397f",
+    "name": "Ketan Rawat",
+    "email": "ketanrawat2004@gmail.com",
+    "passwordHash": "$2a$12$0xoi68rnHuHoQQlUqlSules4oZStiuJn.2T2ttIeGjaaybFtpfEZK",
+    "phone": "7489898361",
+    "role": "STUDENT",
+    "isVerified": true,
+    "isActive": true,
+    "createdAt": "2026-08-10T19:59:32.850Z",
+    "updatedAt": "2026-08-11T06:18:19.246Z",
+    "__v": 0
+  },
+  {
+    "collegeId": "6a79bbf31b916814bbee397f",
+    "name": "KETAN RAWAT",
+    "email": "2023ugec116@nitjsr.ac.in",
+    "passwordHash": "$2a$12$1fP7jbZ9H4UvX/P7TvlGjOn90s/8LLUEGYnz4Fb4VBLHi7BTRvrV.",
+    "phone": "9876543210",
+    "googleId": "104056903877590491812",
+    "avatarUrl": "https://lh3.googleusercontent.com/a/ACg8ocL2kF7Ke-NRD0UKTQPvJMlE4_wy9zbyaQ-eAXVE5fHnDGF3xVo=s96-c",
+    "role": "STUDENT",
+    "isVerified": true,
+    "isActive": true,
+    "deliveryProfile": {
+      "isAvailable": false,
+      "vehicleType": "ON_FOOT"
+    },
+    "_id": "6a7b0cf53dc45d48d35321cb",
+    "createdAt": "2026-08-11T11:52:21.866Z",
+    "updatedAt": "2026-08-11T11:52:21.866Z",
+    "__v": 0
+  }
+]

@@ -314,9 +314,47 @@ async function sendOrderConfirmationEmail({
       });
 
       logger.info({ msg: '📧 [RESEND HTTPS EMAIL DISPATCH SUCCESS]', messageId: resendRes.data?.id, to });
-      return { success: true, messageId: resendRes.data?.id };
+      return { success: true, messageId: resendRes.data?.id, provider: 'Resend HTTPS' };
     } catch (rErr) {
-      logger.warn({ msg: 'Resend HTTPS API error, falling back to SMTP...', err: rErr.response?.data || rErr.message });
+      logger.warn({ msg: 'Resend HTTPS API error, falling back to next provider...', err: rErr.response?.data || rErr.message });
+    }
+  }
+
+  // Strategy 0B: Brevo (Sendinblue) HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
+  const brevoApiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
+  if (brevoApiKey) {
+    try {
+      const senderEmail = process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+      const brevoPayload = {
+        sender: {
+          name: process.env.EMAIL_FROM_NAME || 'CampusBite NIT Jamshedpur',
+          email: senderEmail,
+        },
+        to: [{ email: to, name: studentName || 'Student Customer' }],
+        bcc: [{ email: senderEmail, name: 'CampusBite Admin' }],
+        subject: `✅ Order Confirmed — #${orderNumber}`,
+        htmlContent: html,
+        attachment: pdfBuffer ? [
+          {
+            name: `CampusBite-Invoice-${orderNumber}.pdf`,
+            content: pdfBuffer.toString('base64'),
+          }
+        ] : [],
+      };
+
+      const brevoRes = await axios.post('https://api.brevo.com/v3/smtp/email', brevoPayload, {
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      logger.info({ msg: '📧 [BREVO HTTPS EMAIL DISPATCH SUCCESS]', messageId: brevoRes.data?.messageId, to });
+      return { success: true, messageId: brevoRes.data?.messageId, provider: 'Brevo HTTPS' };
+    } catch (bErr) {
+      logger.warn({ msg: 'Brevo HTTPS API error, falling back to SMTP...', err: bErr.response?.data || bErr.message });
     }
   }
 
@@ -326,14 +364,14 @@ async function sendOrderConfirmationEmail({
     try {
       // Strategy 1: Port 587 STARTTLS (Standard for AWS/Render outbound)
       transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT, 10) || 587,
         secure: false,
         auth: { user: smtpUser, pass: smtpPass },
         tls: { rejectUnauthorized: false },
-        connectionTimeout: 8000,
-        greetingTimeout: 8000,
-        socketTimeout: 8000,
+        connectionTimeout: 3500,
+        greetingTimeout: 3500,
+        socketTimeout: 3500,
       });
       await transporter.verify();
     } catch (tErr1) {
@@ -344,23 +382,23 @@ async function sendOrderConfirmationEmail({
           service: 'gmail',
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
+          connectionTimeout: 3500,
+          greetingTimeout: 3500,
+          socketTimeout: 3500,
         });
         await transporter.verify();
       } catch (tErr2) {
         logger.warn({ msg: 'Gmail service wrapper failed, falling back to Port 465 SSL...', err: tErr2.message });
         // Strategy 3: Port 465 Direct SSL
         transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
           port: 465,
           secure: true,
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 8000,
-          greetingTimeout: 8000,
-          socketTimeout: 8000,
+          connectionTimeout: 3500,
+          greetingTimeout: 3500,
+          socketTimeout: 3500,
         });
       }
     }
@@ -523,6 +561,7 @@ async function testEmailDelivery(targetEmail) {
     emailPassConfigured: !!smtpPass,
     emailPassLength: smtpPass ? smtpPass.length : 0,
     resendApiKeyConfigured: !!process.env.RESEND_API_KEY,
+    brevoApiKeyConfigured: !!(process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY),
     nodeEnv: process.env.NODE_ENV || 'development',
   };
 
@@ -558,10 +597,45 @@ async function testEmailDelivery(targetEmail) {
     }
   }
 
+  // If Brevo API Key is configured, test HTTPS delivery
+  const brevoApiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
+  if (brevoApiKey) {
+    try {
+      const senderEmail = process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+      const brevoRes = await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: process.env.EMAIL_FROM_NAME || 'CampusBite NIT Jamshedpur', email: senderEmail },
+        to: [{ email: to, name: 'Test Recipient' }],
+        subject: '🧪 CampusBite Test Email (via Brevo HTTPS)',
+        htmlContent: '<h2>CampusBite Test Email</h2><p>This test email was successfully dispatched via <strong>Brevo HTTPS API</strong>.</p>',
+      }, {
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      return {
+        success: true,
+        provider: 'Brevo HTTPS',
+        messageId: brevoRes.data?.messageId,
+        diagnostics,
+      };
+    } catch (bErr) {
+      return {
+        success: false,
+        provider: 'Brevo HTTPS',
+        error: bErr.response?.data || bErr.message,
+        diagnostics,
+      };
+    }
+  }
+
   if (!smtpUser || !smtpPass) {
     return {
       success: false,
-      error: 'SMTP credentials missing in Render environment. Please add EMAIL_USER and EMAIL_PASS (16-char Google App Password) to your Render Web Service.',
+      error: 'SMTP credentials missing in Render environment. Please add EMAIL_USER and EMAIL_PASS (16-char Google App Password) or RESEND_API_KEY/BREVO_API_KEY to your Render Web Service.',
       diagnostics,
     };
   }
@@ -572,12 +646,12 @@ async function testEmailDelivery(targetEmail) {
   // Try 587 STARTTLS
   try {
     transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT, 10) || 587,
       secure: false,
       auth: { user: smtpUser, pass: smtpPass },
       tls: { rejectUnauthorized: false },
-      connectionTimeout: 8000,
+      connectionTimeout: 3500,
     });
     await transporter.verify();
   } catch (err1) {
@@ -588,7 +662,7 @@ async function testEmailDelivery(targetEmail) {
         service: 'gmail',
         auth: { user: smtpUser, pass: smtpPass },
         tls: { rejectUnauthorized: false },
-        connectionTimeout: 8000,
+        connectionTimeout: 3500,
       });
       await transporter.verify();
     } catch (err2) {
@@ -596,12 +670,12 @@ async function testEmailDelivery(targetEmail) {
       // Try 465 SSL
       try {
         transporter = nodemailer.createTransport({
-          host: 'smtp.gmail.com',
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
           port: 465,
           secure: true,
           auth: { user: smtpUser, pass: smtpPass },
           tls: { rejectUnauthorized: false },
-          connectionTimeout: 8000,
+          connectionTimeout: 3500,
         });
         await transporter.verify();
       } catch (err3) {

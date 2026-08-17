@@ -570,7 +570,37 @@ async function testEmailDelivery(targetEmail) {
     nodeEnv: process.env.NODE_ENV || 'development',
   };
 
-  // If Resend API Key is configured, test HTTPS delivery
+  // Strategy 0: Brevo (Sendinblue) HTTPS API over Port 443 (Delivers to ANY student email address, 100% unrestricted)
+  const brevoApiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
+  if (brevoApiKey) {
+    try {
+      const senderEmail = process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+      const brevoRes = await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: process.env.EMAIL_FROM_NAME || 'CampusBite NIT Jamshedpur', email: senderEmail },
+        to: [{ email: to, name: 'Student Customer' }],
+        subject: '🧪 CampusBite Test Email (via Brevo HTTPS)',
+        htmlContent: '<h2>CampusBite Test Email</h2><p>This test email was successfully dispatched via <strong>Brevo HTTPS API</strong> directly to your registered student address.</p>',
+      }, {
+        headers: {
+          'api-key': brevoApiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      return {
+        success: true,
+        provider: 'Brevo HTTPS',
+        messageId: brevoRes.data?.messageId,
+        diagnostics,
+      };
+    } catch (bErr) {
+      logger.warn({ msg: 'Brevo HTTPS API error, trying next provider...', err: bErr.response?.data || bErr.message });
+    }
+  }
+
+  // Strategy 0B: Resend HTTPS API over Port 443
   if (process.env.RESEND_API_KEY) {
     try {
       let resendFrom = process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>';
@@ -598,47 +628,7 @@ async function testEmailDelivery(targetEmail) {
         diagnostics,
       };
     } catch (rErr) {
-      return {
-        success: false,
-        provider: 'Resend HTTPS',
-        error: rErr.response?.data || rErr.message,
-        diagnostics,
-      };
-    }
-  }
-
-  // If Brevo API Key is configured, test HTTPS delivery
-  const brevoApiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
-  if (brevoApiKey) {
-    try {
-      const senderEmail = process.env.EMAIL_USER || 'krishnapex1@gmail.com';
-      const brevoRes = await axios.post('https://api.brevo.com/v3/smtp/email', {
-        sender: { name: process.env.EMAIL_FROM_NAME || 'CampusBite NIT Jamshedpur', email: senderEmail },
-        to: [{ email: to, name: 'Test Recipient' }],
-        subject: '🧪 CampusBite Test Email (via Brevo HTTPS)',
-        htmlContent: '<h2>CampusBite Test Email</h2><p>This test email was successfully dispatched via <strong>Brevo HTTPS API</strong>.</p>',
-      }, {
-        headers: {
-          'api-key': brevoApiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        timeout: 10000,
-      });
-
-      return {
-        success: true,
-        provider: 'Brevo HTTPS',
-        messageId: brevoRes.data?.messageId,
-        diagnostics,
-      };
-    } catch (bErr) {
-      return {
-        success: false,
-        provider: 'Brevo HTTPS',
-        error: bErr.response?.data || bErr.message,
-        diagnostics,
-      };
+      logger.warn({ msg: 'Resend HTTPS API error, falling back to SMTP...', err: rErr.response?.data || rErr.message });
     }
   }
 

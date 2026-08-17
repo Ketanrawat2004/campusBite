@@ -106,13 +106,14 @@ router.post(
     const singleStudentEmail = (studentUser?.email || req.user?.email || order.studentEmail || '').toLowerCase().trim();
     const nodemailerRecipient = singleStudentEmail;
     const authenticatedUserId = req.user?.id || req.user?._id || studentUser?._id || 'guest_user';
+    const orderUserId = studentUser?._id || authenticatedUserId;
 
     // REQUIRED BACKEND DEBUG LOG FORMAT
     console.log(`\n[RECEIPT EMAIL DEBUG]
 Order ID: ${order._id}
 Authenticated User ID: ${authenticatedUserId}
-Order User ID: ${studentUser._id}
-User email from MongoDB: ${userEmailFromMongoDB}
+Order User ID: ${orderUserId}
+User email from MongoDB: ${singleStudentEmail}
 Recipient passed to Nodemailer: ${nodemailerRecipient}
 CC: None
 BCC: None\n`);
@@ -120,9 +121,9 @@ BCC: None\n`);
     logger.info({
       msg: '[RECEIPT EMAIL DEBUG]',
       authenticatedUserId,
-      orderUserId: studentUser._id,
+      orderUserId,
       orderId: order._id,
-      userEmailFromMongoDB,
+      userEmailFromMongoDB: singleStudentEmail,
       nodemailerRecipient,
     });
 

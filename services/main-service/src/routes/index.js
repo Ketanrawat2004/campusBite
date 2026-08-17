@@ -16,6 +16,14 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Diagnostic Email Test Endpoint
+router.get('/test-email', async (req, res) => {
+  const notificationClient = require('../utils/notificationClient');
+  const targetEmail = req.query.to || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+  const result = await notificationClient.testEmailDelivery(targetEmail);
+  res.status(result.success ? 200 : 400).json(result);
+});
+
 // Route groups
 router.use('/auth', require('./auth.routes'));
 router.use('/profile', require('./profile.routes'));

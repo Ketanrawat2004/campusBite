@@ -282,7 +282,10 @@ async function sendOrderConfirmationEmail({
   }
 
   const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-  const smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
+  let smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
+  if (smtpPass && typeof smtpPass === 'string') {
+    smtpPass = smtpPass.replace(/\s+/g, '');
+  }
 
   // Strategy 0: Resend HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -505,7 +508,154 @@ Your order is being prepared by the canteen!${trackUrlStr}`;
   return { success: true, mode: 'DEV_LOGGED', to: e164Phone };
 }
 
+async function testEmailDelivery(targetEmail) {
+  const to = targetEmail || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
+  const smtpUser = process.env.EMAIL_USER || process.env.SMTP_USER;
+  let smtpPass = process.env.EMAIL_PASS || process.env.SMTP_PASSWORD;
+  if (smtpPass && typeof smtpPass === 'string') {
+    smtpPass = smtpPass.replace(/\s+/g, '');
+  }
+
+  const diagnostics = {
+    targetRecipient: to,
+    emailUserConfigured: !!smtpUser,
+    emailUser: smtpUser ? `${smtpUser.slice(0, 4)}***@${smtpUser.split('@')[1] || ''}` : 'NOT_SET',
+    emailPassConfigured: !!smtpPass,
+    emailPassLength: smtpPass ? smtpPass.length : 0,
+    resendApiKeyConfigured: !!process.env.RESEND_API_KEY,
+    nodeEnv: process.env.NODE_ENV || 'development',
+  };
+
+  // If Resend API Key is configured, test HTTPS delivery
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const resendRes = await axios.post('https://api.resend.com/emails', {
+        from: process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>',
+        to: [to],
+        subject: '🧪 CampusBite Test Email (via Resend HTTPS)',
+        html: '<h2>CampusBite Test Email</h2><p>This test email was successfully dispatched via <strong>Resend HTTPS API</strong>.</p>',
+      }, {
+        headers: {
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      return {
+        success: true,
+        provider: 'Resend HTTPS',
+        messageId: resendRes.data?.id,
+        diagnostics,
+      };
+    } catch (rErr) {
+      return {
+        success: false,
+        provider: 'Resend HTTPS',
+        error: rErr.response?.data || rErr.message,
+        diagnostics,
+      };
+    }
+  }
+
+  if (!smtpUser || !smtpPass) {
+    return {
+      success: false,
+      error: 'SMTP credentials missing in Render environment. Please add EMAIL_USER and EMAIL_PASS (16-char Google App Password) to your Render Web Service.',
+      diagnostics,
+    };
+  }
+
+  let transporter;
+  let lastError = null;
+
+  // Try 587 STARTTLS
+  try {
+    transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: { user: smtpUser, pass: smtpPass },
+      tls: { rejectUnauthorized: false },
+      connectionTimeout: 8000,
+    });
+    await transporter.verify();
+  } catch (err1) {
+    lastError = err1;
+    // Try service gmail
+    try {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 8000,
+      });
+      await transporter.verify();
+    } catch (err2) {
+      lastError = err2;
+      // Try 465 SSL
+      try {
+        transporter = nodemailer.createTransport({
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 8000,
+        });
+        await transporter.verify();
+      } catch (err3) {
+        lastError = err3;
+      }
+    }
+  }
+
+  if (!transporter) {
+    return {
+      success: false,
+      error: `All SMTP connection strategies failed: ${lastError?.message}`,
+      code: lastError?.code,
+      diagnostics,
+    };
+  }
+
+  try {
+    const fromAddress = process.env.EMAIL_FROM || `CampusBite <${smtpUser}>`;
+    const info = await transporter.sendMail({
+      from: fromAddress,
+      to,
+      subject: '🧪 CampusBite Test Order Confirmation Email',
+      html: `
+        <div style="font-family:sans-serif;padding:20px;border:1px solid #fed7aa;border-radius:12px;max-width:500px;background:#fff7ed;">
+          <h2 style="color:#ea580c;margin-top:0;">🍱 CampusBite Live Email Test</h2>
+          <p>Congratulations! Your live email dispatcher is working properly on Render.</p>
+          <p><strong>Recipient:</strong> ${to}</p>
+          <p><strong>Sender:</strong> ${fromAddress}</p>
+          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+        </div>
+      `,
+    });
+
+    return {
+      success: true,
+      provider: 'Gmail SMTP',
+      messageId: info.messageId,
+      accepted: info.accepted,
+      response: info.response,
+      diagnostics,
+    };
+  } catch (sendErr) {
+    return {
+      success: false,
+      error: `Failed to send test email: ${sendErr.message}`,
+      code: sendErr.code,
+      diagnostics,
+    };
+  }
+}
+
 module.exports = {
   sendOrderConfirmationEmail,
   sendWhatsAppOrderReceipt,
+  testEmailDelivery,
 };

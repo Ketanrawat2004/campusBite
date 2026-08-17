@@ -3,8 +3,9 @@ import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
-const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://campusbite-backend-i2ke.onrender.com/api/v1';
+const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || 'https://campusbite-jpwq.onrender.com';
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'https://campusbite-canteen.onrender.com';
 
 // ─── Shared Styles (light theme) ─────────────────────────────────────────────
 const S = {
@@ -70,6 +71,9 @@ export default function AdminApp() {
               <NavLink to="/delivery-config">🚴 Delivery Tiers</NavLink>
               <a href={STUDENT_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f97316', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
                 🍱 Student App ↗
+              </a>
+              <a href={CANTEEN_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#ea580c', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
+                👨‍🍳 Canteen ↗
               </a>
               <div style={{ marginLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>{user.name}</span>

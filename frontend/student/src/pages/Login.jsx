@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import axiosClient from '../api/client';
 import toast from 'react-hot-toast';
 
-const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'http://localhost:3001';
-const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3002';
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'https://campusbite-canteen.onrender.com';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'https://campusbite-admin-cxux.onrender.com';
 
 /* ── Password strength checker ───────────────────────────────────────── */
 function getPasswordStrength(pwd) {

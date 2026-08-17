@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom';
-
-const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'http://localhost:3001';
-const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3002';
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'https://campusbite-canteen.onrender.com';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'https://campusbite-admin-cxux.onrender.com';
 
 export default function LandingPage() {
   return (
@@ -23,27 +21,27 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
               href={CANTEEN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="text-xs font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 transition-colors flex items-center gap-1"
             >
-              👨‍🍳 Canteen Staff Portal
+              <span>👨‍🍳</span> <span className="hidden sm:inline">Canteen Staff</span>
             </a>
             <a
               href={ADMIN_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              className="text-xs font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 transition-colors flex items-center gap-1"
             >
-              🛡️ Admin Console
+              <span>🛡️</span> <span className="hidden sm:inline">Admin Console</span>
             </a>
-            <Link to="/login" className="btn btn-secondary">
+            <Link to="/login" className="btn btn-secondary text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4">
               Sign In
             </Link>
-            <Link to="/register" className="btn btn-primary">
+            <Link to="/register" className="btn btn-primary text-xs sm:text-sm py-1.5 sm:py-2 px-3 sm:px-4">
               Get Started →
             </Link>
           </div>
@@ -185,17 +183,106 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Staff & Administration Portal Links Section */}
+      <section className="py-12 bg-white border-t border-slate-200">
+        <div className="page-container space-y-8">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="badge badge-orange font-bold text-xs uppercase tracking-wider">
+              Management & Staff Portals
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900">
+              Canteen Staff & Campus Admin Access
+            </h2>
+            <p className="text-sm text-slate-500">
+              Direct access portals for kitchen operators, hostel delivery coordinators, and campus administrators.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Canteen Staff Card */}
+            <div className="card p-6 border-orange-200 bg-gradient-to-br from-orange-50/50 via-white to-white hover:shadow-lg transition-all flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-2xl font-bold">
+                    👨‍🍳
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-orange-100 text-orange-800 text-[11px] font-bold">
+                    Vendor Portal
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Canteen Staff Portal</h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Live kitchen order queue with audio chime notifications, item availability controls, and prep status updates.
+                </p>
+              </div>
+
+              <div className="pt-5 border-t border-slate-100 mt-5">
+                <a
+                  href={CANTEEN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary w-full justify-center text-sm font-bold flex items-center gap-2"
+                >
+                  <span>Launch Canteen Portal</span>
+                  <span>↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Admin Console Card */}
+            <div className="card p-6 border-slate-200 bg-gradient-to-br from-slate-50/70 via-white to-white hover:shadow-lg transition-all flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center text-2xl font-bold">
+                    🛡️
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-800 text-[11px] font-bold">
+                    Admin Console
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Campus Admin Console</h3>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Live revenue analytics, delivery tier configuration, student and vendor management, and complaint resolution.
+                </p>
+              </div>
+
+              <div className="pt-5 border-t border-slate-100 mt-5">
+                <a
+                  href={ADMIN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary w-full justify-center text-sm font-bold flex items-center gap-2 border-slate-300"
+                >
+                  <span>Launch Admin Console</span>
+                  <span>↗</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-8 bg-white border-t border-slate-200 text-center text-xs text-slate-500">
-        <div className="page-container space-y-2">
+        <div className="page-container space-y-3">
           <p className="font-bold text-slate-700">© 2026 CampusBite • National Institute of Technology Jamshedpur</p>
-          <div className="flex justify-center gap-4 pt-1">
-            <a href={CANTEEN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
-              👨‍🍳 Canteen Staff Portal
+          <div className="flex flex-wrap justify-center items-center gap-3 pt-1">
+            <a
+              href={CANTEEN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200 font-semibold transition-colors"
+            >
+              👨‍🍳 Canteen Staff Portal ↗
             </a>
             <span>•</span>
-            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
-              🛡️ Admin Console
+            <a
+              href={ADMIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 font-semibold transition-colors"
+            >
+              🛡️ Admin Console ↗
             </a>
           </div>
         </div>

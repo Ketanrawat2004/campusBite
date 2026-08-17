@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import axiosClient from '../api/client';
 
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'https://campusbite-canteen.onrender.com';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'https://campusbite-admin-cxux.onrender.com';
+
 export default function Navbar({ onOpenCart }) {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
@@ -152,6 +155,35 @@ export default function Navbar({ onOpenCart }) {
                     >
                       📜 Order History
                     </Link>
+
+                    {/* Staff & Admin Direct Access */}
+                    <div className="border-t border-slate-100 my-1 py-1">
+                      <div className="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Staff & Admin
+                      </div>
+                      <a
+                        href={CANTEEN_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between px-4 py-1.5 text-xs text-orange-700 hover:bg-orange-50 font-medium"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>👨‍🍳</span> Canteen Portal
+                        </span>
+                        <span className="text-[10px] text-orange-500">↗</span>
+                      </a>
+                      <a
+                        href={ADMIN_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between px-4 py-1.5 text-xs text-slate-700 hover:bg-slate-50 font-medium"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>🛡️</span> Admin Console
+                        </span>
+                        <span className="text-[10px] text-slate-400">↗</span>
+                      </a>
+                    </div>
 
                     <div className="border-t border-slate-100 pt-1">
                       <button

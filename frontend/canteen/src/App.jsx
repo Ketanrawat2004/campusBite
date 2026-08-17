@@ -3,7 +3,9 @@ import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'https://campusbite-backend-i2ke.onrender.com/api/v1';
+const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || 'https://campusbite-jpwq.onrender.com';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'https://campusbite-admin-cxux.onrender.com';
 
 // Web Audio API Synthesized Chime for New Order Notifications
 function playNewOrderChime() {
@@ -191,6 +193,15 @@ export default function CanteenApp() {
                   📊 Analytics
                 </Link>
               </nav>
+
+              <a
+                href={STUDENT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#ea580c', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}
+              >
+                🍱 Student App ↗
+              </a>
 
               <button
                 onClick={logout}

@@ -92,7 +92,8 @@ const cancelOrder = asyncHandler(async (req, res) => {
  * GET /api/v1/orders/canteen/queue (Canteen Staff)
  */
 const getCanteenOrderQueue = asyncHandler(async (req, res) => {
-  const canteenId = req.user.canteenId || req.query.canteenId;
+  let canteenId = req.query.canteenId || (req.query.allCanteens === 'true' ? null : req.user?.canteenId);
+  if (canteenId === 'ALL') canteenId = null;
   const result = await orderService.getCanteenOrders(canteenId, req.query);
   res.json({
     success: true,

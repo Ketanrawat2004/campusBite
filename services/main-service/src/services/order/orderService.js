@@ -237,11 +237,8 @@ async function getCanteenOrders(canteenId, query = {}) {
   const skip = (page - 1) * limit;
   const filter = {};
 
-  if (canteenId && canteenId !== 'undefined' && canteenId !== 'null' && query.allCanteens !== 'true') {
-    const specificCount = await Order.countDocuments({ canteenId });
-    if (specificCount > 0) {
-      filter.canteenId = canteenId;
-    }
+  if (canteenId && canteenId !== 'ALL' && canteenId !== 'undefined' && canteenId !== 'null' && query.allCanteens !== 'true') {
+    filter.canteenId = canteenId;
   }
 
   if (query.allStatus === 'true') {

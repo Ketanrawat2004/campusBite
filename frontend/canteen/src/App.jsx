@@ -214,7 +214,7 @@ export default function CanteenApp() {
 
           <main style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto' }}>
             <Routes>
-              <Route path="/queue" element={<OrderQueuePage token={token} soundEnabled={soundEnabled} />} />
+              <Route path="/queue" element={<OrderQueuePage token={token} user={user} soundEnabled={soundEnabled} />} />
               <Route path="/menu" element={<MenuMgmtPage token={token} user={user} />} />
               <Route path="/issues" element={<IssuesPage token={token} />} />
               <Route path="/analytics" element={<AnalyticsPage token={token} />} />
@@ -461,7 +461,10 @@ function OrderQueuePage({ token, user, soundEnabled }) {
 
   const fetchQueue = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE}/orders/canteen/queue?allStatus=true`, {
+      const targetQuery = selectedCanteenId && selectedCanteenId !== 'ALL'
+        ? `canteenId=${selectedCanteenId}`
+        : 'allCanteens=true';
+      const { data } = await axios.get(`${API_BASE}/orders/canteen/queue?allStatus=true&${targetQuery}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fetchedOrders = data.data || [];
@@ -483,7 +486,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
       setOrders(fetchedOrders);
 
       // Also sync selected canteen statusMode from server
-      const targetId = selectedCanteenId || user?.canteenProfile?.canteenId;
+      const targetId = selectedCanteenId && selectedCanteenId !== 'ALL' ? selectedCanteenId : (user?.canteenProfile?.canteenId || (canteensList[0] ? canteensList[0]._id : null));
       if (targetId) {
         const cRes = await axios.get(`${API_BASE}/canteens/${targetId}`);
         if (cRes.data?.data?.statusMode) {
@@ -501,7 +504,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
     fetchQueue();
     const interval = setInterval(fetchQueue, 2000); // 2s real-time queue refresh
     return () => clearInterval(interval);
-  }, [token, soundEnabled]);
+  }, [token, soundEnabled, selectedCanteenId]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
@@ -620,6 +623,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
                     outline: 'none',
                   }}
                 >
+                  <option value="ALL">🏪 ALL Canteens (Unified Campus Queue)</option>
                   {canteensList.map((c) => (
                     <option key={c._id} value={c._id}>
                       🏪 {c.name}

@@ -115,7 +115,7 @@ async function sendOrderConfirmationEmail({
               <div style="font-size:13px;font-weight:800;color:#ffffff;font-family:Arial,sans-serif;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
                 ✓ ORDER CONFIRMED & PAID
               </div>
-              ${logoExists ? `<img src="cid:campusbite-logo" alt="CampusBite Logo" width="72" height="72" style="display:block;margin:0 auto 10px auto;width:72px;height:72px;border:0;outline:none;" />` : ''}
+              <img src="https://campusbite-jpwq.onrender.com/images/campusbite_logo.png" alt="CampusBite Logo" width="72" height="72" style="display:block;margin:0 auto 10px auto;width:72px;height:72px;border:0;outline:none;object-fit:contain;" />
               <div style="font-size:24px;font-weight:800;color:#ffffff;font-family:Arial,sans-serif;letter-spacing:-0.5px;margin:0;">
                 CampusBite
               </div>
@@ -298,7 +298,6 @@ async function sendOrderConfirmationEmail({
           email: senderEmail,
         },
         to: [{ email: to, name: studentName || 'Student Customer' }],
-        bcc: [{ email: senderEmail, name: 'CampusBite Admin' }],
         subject: `✅ Order Confirmed — #${orderNumber}`,
         htmlContent: html,
         attachment: pdfBuffer ? [
@@ -337,7 +336,6 @@ async function sendOrderConfirmationEmail({
       const resendPayload = {
         from: resendFrom,
         to: Array.isArray(to) ? to : to.split(',').map(s => s.trim()),
-        bcc: [process.env.EMAIL_USER || 'krishnapex1@gmail.com'],
         subject: `✅ Order Confirmed — #${orderNumber}`,
         html,
         attachments: pdfBuffer ? [
@@ -449,7 +447,6 @@ BCC: None\n`);
     const info = await transporter.sendMail({
       from: fromAddress,
       to,
-      bcc: process.env.EMAIL_USER || 'krishnapex1@gmail.com',
       subject: `✅ Order Confirmed — #${orderNumber}`,
       html,
       attachments: emailAttachments,

@@ -318,17 +318,14 @@ async function googleAuth({ idToken, role, email: devEmail, name: devName }) {
           name = decoded.name || devName || 'Google User';
           picture = decoded.picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150';
           googleId = decoded.sub || 'google_demo_id_9988776655';
+          if (!email) {
+            throw new Error('Could not extract email from Google credential token');
+          }
         } else {
-          email = (devEmail || 'krishnapex1@gmail.com').toLowerCase();
-          name = devName || 'Ketan Rawat';
-          picture = 'https://lh3.googleusercontent.com/a/ACg8ocK4XuwLyerxWTc6isxmRMn9nzT12T4KkaOU0bKC1GW9AqjUfB7k=s96-c';
-          googleId = '109266243973791796997';
+          throw new Error('Google token could not be verified');
         }
-      } catch {
-        email = (devEmail || 'krishnapex1@gmail.com').toLowerCase();
-        name = devName || 'Ketan Rawat';
-        picture = 'https://lh3.googleusercontent.com/a/ACg8ocK4XuwLyerxWTc6isxmRMn9nzT12T4KkaOU0bKC1GW9AqjUfB7k=s96-c';
-        googleId = '109266243973791796997';
+      } catch (decodeErr) {
+        throw ApiError.unauthorized(`Google Authentication failed: ${err.message}`);
       }
     }
   }

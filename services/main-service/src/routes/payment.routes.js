@@ -87,7 +87,7 @@ router.post(
     });
     await order.save();
 
-    // Student & Canteen Data Extraction (Ultra-Resilient with Fallback)
+    // Student & Canteen Data Extraction - Strictly single student recipient
     let studentUser = order.studentId;
     const User = require('../models/User');
     if (!studentUser || typeof studentUser !== 'object' || !studentUser.email) {
@@ -103,15 +103,8 @@ router.post(
       }
     }
 
-    const fallbackEmail = req.user?.email || order.studentEmail || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
-    const userEmailFromMongoDB = (studentUser && studentUser.email) ? studentUser.email.toLowerCase().trim() : fallbackEmail;
-    let nodemailerRecipient = userEmailFromMongoDB;
-    if (req.user?.email && req.user.email.includes('@')) {
-      const sessionEmail = req.user.email.toLowerCase().trim();
-      if (sessionEmail !== userEmailFromMongoDB && !nodemailerRecipient.includes(sessionEmail)) {
-        nodemailerRecipient = `${nodemailerRecipient}, ${sessionEmail}`;
-      }
-    }
+    const singleStudentEmail = (studentUser?.email || req.user?.email || order.studentEmail || '').toLowerCase().trim();
+    const nodemailerRecipient = singleStudentEmail;
     const authenticatedUserId = req.user?.id || req.user?._id || studentUser?._id || 'guest_user';
 
     // REQUIRED BACKEND DEBUG LOG FORMAT

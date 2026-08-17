@@ -154,9 +154,7 @@ const sendOrderReceiptToCustomDetails = asyncHandler(async (req, res) => {
     customerUser = await User.findById(req.user.id);
   }
 
-  const fallbackEmail = req.user?.email || order.studentEmail || process.env.EMAIL_USER || 'krishnapex1@gmail.com';
-  const userEmailFromMongoDB = customerUser?.email ? customerUser.email.toLowerCase() : fallbackEmail;
-  const nodemailerRecipient = userEmailFromMongoDB;
+  const nodemailerRecipient = (customerUser?.email || req.user?.email || order.studentEmail || '').toLowerCase().trim();
 
   const studentName = customerUser?.name || req.user?.name || 'Student Customer';
   const canteenName = order.canteenId?.name || 'Campus Canteen';

@@ -61,25 +61,16 @@ export default function LoginPage() {
 
   const handleGoogleResponse = useCallback(async (response) => {
     setGoogleLoading(true);
+    if (!response?.credential) {
+      toast.error('Google credential not found. Please try again.');
+      setGoogleLoading(false);
+      return;
+    }
+
     try {
-      let resultData;
-      const credentialToken = response?.credential;
-      
-      try {
-        const payload = credentialToken 
-          ? { idToken: credentialToken }
-          : { idToken: 'demo_google_token', email: 'krishnapex1@gmail.com', name: 'Ketan Rawat' };
-        const res = await axiosClient.post('/auth/google', payload);
-        resultData = res.data;
-      } catch (err) {
-        console.warn('Real Google ID token post failed, executing dev demo fallback:', err);
-        const res = await axiosClient.post('/auth/google', {
-          idToken: 'demo_google_token',
-          email: 'krishnapex1@gmail.com',
-          name: 'Ketan Rawat',
-        });
-        resultData = res.data;
-      }
+      const { data: resultData } = await axiosClient.post('/auth/google', {
+        idToken: response.credential,
+      });
 
       if (resultData?.data?.accessToken && resultData?.data?.user) {
         const userName = resultData.data.user.name || resultData.data.user.email || 'User';
@@ -92,17 +83,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Google Auth Error:', err);
-      try {
-        const { data } = await axiosClient.post('/auth/login', {
-          email: 'rahul@nitjsr.ac.in',
-          password: 'Student@123',
-        });
-        await login(data.data.accessToken, data.data.user);
-        toast.success('Signed in successfully! 🎉');
-        navigate('/home', { replace: true });
-      } catch {
-        toast.error('Google sign-in failed. Please check backend connection.');
-      }
+      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use email & password.');
     } finally {
       setGoogleLoading(false);
     }

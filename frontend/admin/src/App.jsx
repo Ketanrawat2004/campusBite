@@ -3,7 +3,8 @@ import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+const STUDENT_URL = import.meta.env.VITE_STUDENT_URL || 'http://localhost:3000';
 
 // ─── Shared Styles (light theme) ─────────────────────────────────────────────
 const S = {
@@ -67,7 +68,7 @@ export default function AdminApp() {
               <NavLink to="/users">👥 Users</NavLink>
               <NavLink to="/issues">⚠️ Issues</NavLink>
               <NavLink to="/delivery-config">🚴 Delivery Tiers</NavLink>
-              <a href="http://localhost:3000" target="_blank" rel="noopener noreferrer" style={{ color: '#f97316', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
+              <a href={STUDENT_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f97316', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
                 🍱 Student App ↗
               </a>
               <div style={{ marginLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>

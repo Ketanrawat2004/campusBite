@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
 
 // Web Audio API Synthesized Chime for New Order Notifications
 function playNewOrderChime() {
@@ -223,7 +223,7 @@ function CanteenLoginPage({ onLogin }) {
   const [password, setPassword] = useState('Staff@123');
   const [loading, setLoading] = useState(false);
 
-  const GOOGLE_CLIENT_ID = '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
 
   const handleGoogleResponse = async (response) => {
     if (!response || !response.credential) return;

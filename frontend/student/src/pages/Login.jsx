@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import axiosClient from '../api/client';
 import toast from 'react-hot-toast';
 
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'http://localhost:3001';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3002';
+
 /* ── Password strength checker ───────────────────────────────────────── */
 function getPasswordStrength(pwd) {
   let score = 0;
@@ -362,7 +365,7 @@ export default function LoginPage() {
         {/* Canteen Staff & Admin Quick Links */}
         <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
           <a
-            href="http://localhost:3001"
+            href={CANTEEN_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 text-center py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
@@ -370,7 +373,7 @@ export default function LoginPage() {
             <span>👨‍🍳 Canteen Staff Portal</span>
           </a>
           <a
-            href="http://localhost:3002"
+            href={ADMIN_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 text-center py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"

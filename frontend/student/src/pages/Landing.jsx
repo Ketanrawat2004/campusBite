@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
 
+const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'http://localhost:3001';
+const ADMIN_URL = import.meta.env.VITE_ADMIN_URL || 'http://localhost:3002';
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-orange-500 selection:text-white">
@@ -22,7 +25,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-3">
             <a
-              href="http://localhost:3001"
+              href={CANTEEN_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
@@ -30,7 +33,7 @@ export default function LandingPage() {
               👨‍🍳 Canteen Staff Portal
             </a>
             <a
-              href="http://localhost:3002"
+              href={ADMIN_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex text-xs font-semibold px-3 py-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
@@ -187,12 +190,12 @@ export default function LandingPage() {
         <div className="page-container space-y-2">
           <p className="font-bold text-slate-700">© 2026 CampusBite • National Institute of Technology Jamshedpur</p>
           <div className="flex justify-center gap-4 pt-1">
-            <a href="http://localhost:3001" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
-              👨‍🍳 Canteen Staff Portal (Port 3001)
+            <a href={CANTEEN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
+              👨‍🍳 Canteen Staff Portal
             </a>
             <span>•</span>
-            <a href="http://localhost:3002" target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
-              🛡️ Admin Console (Port 3002)
+            <a href={ADMIN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600 font-semibold">
+              🛡️ Admin Console
             </a>
           </div>
         </div>

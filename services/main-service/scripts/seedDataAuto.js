@@ -80,6 +80,18 @@ module.exports = async function seedDataAuto() {
   await User.create({
     collegeId: college._id,
     campusId: campus._id,
+    name: 'CampusBite Admin (NITJSR)',
+    email: 'admin@nitjsr.ac.in',
+    passwordHash: 'Admin@123',
+    phone: '9000000002',
+    role: 'ADMIN',
+    isVerified: true,
+    isActive: true,
+  });
+
+  await User.create({
+    collegeId: college._id,
+    campusId: campus._id,
     name: 'Rahul Kumar',
     email: 'rahul@nitjsr.ac.in',
     passwordHash: 'Student@123',

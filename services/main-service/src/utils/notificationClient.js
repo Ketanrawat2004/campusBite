@@ -287,40 +287,7 @@ async function sendOrderConfirmationEmail({
     smtpPass = smtpPass.replace(/\s+/g, '');
   }
 
-  // Strategy 0: Resend HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (resendApiKey) {
-    try {
-      const resendPayload = {
-        from: process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>',
-        to: Array.isArray(to) ? to : to.split(',').map(s => s.trim()),
-        bcc: [process.env.EMAIL_USER || 'krishnapex1@gmail.com'],
-        subject: `✅ Order Confirmed — #${orderNumber}`,
-        html,
-        attachments: pdfBuffer ? [
-          {
-            filename: `CampusBite-Invoice-${orderNumber}.pdf`,
-            content: pdfBuffer.toString('base64'),
-          }
-        ] : []
-      };
-
-      const resendRes = await axios.post('https://api.resend.com/emails', resendPayload, {
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      });
-
-      logger.info({ msg: '📧 [RESEND HTTPS EMAIL DISPATCH SUCCESS]', messageId: resendRes.data?.id, to });
-      return { success: true, messageId: resendRes.data?.id, provider: 'Resend HTTPS' };
-    } catch (rErr) {
-      logger.warn({ msg: 'Resend HTTPS API error, falling back to next provider...', err: rErr.response?.data || rErr.message });
-    }
-  }
-
-  // Strategy 0B: Brevo (Sendinblue) HTTPS API over Port 443 (100% immune to cloud SMTP port blocks)
+  // Strategy 0: Brevo (Sendinblue) HTTPS API over Port 443 (Delivers to ANY student email address, 100% free)
   const brevoApiKey = process.env.BREVO_API_KEY || process.env.SENDINBLUE_API_KEY;
   if (brevoApiKey) {
     try {
@@ -354,7 +321,45 @@ async function sendOrderConfirmationEmail({
       logger.info({ msg: '📧 [BREVO HTTPS EMAIL DISPATCH SUCCESS]', messageId: brevoRes.data?.messageId, to });
       return { success: true, messageId: brevoRes.data?.messageId, provider: 'Brevo HTTPS' };
     } catch (bErr) {
-      logger.warn({ msg: 'Brevo HTTPS API error, falling back to SMTP...', err: bErr.response?.data || bErr.message });
+      logger.warn({ msg: 'Brevo HTTPS API error, falling back to next provider...', err: bErr.response?.data || bErr.message });
+    }
+  }
+
+  // Strategy 0B: Resend HTTPS API over Port 443
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      let resendFrom = process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>';
+      if (resendFrom.includes('@gmail.com') || resendFrom.includes('@yahoo.com') || resendFrom.includes('@hotmail.com')) {
+        resendFrom = 'CampusBite <onboarding@resend.dev>';
+      }
+
+      const resendPayload = {
+        from: resendFrom,
+        to: Array.isArray(to) ? to : to.split(',').map(s => s.trim()),
+        bcc: [process.env.EMAIL_USER || 'krishnapex1@gmail.com'],
+        subject: `✅ Order Confirmed — #${orderNumber}`,
+        html,
+        attachments: pdfBuffer ? [
+          {
+            filename: `CampusBite-Invoice-${orderNumber}.pdf`,
+            content: pdfBuffer.toString('base64'),
+          }
+        ] : []
+      };
+
+      const resendRes = await axios.post('https://api.resend.com/emails', resendPayload, {
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000,
+      });
+
+      logger.info({ msg: '📧 [RESEND HTTPS EMAIL DISPATCH SUCCESS]', messageId: resendRes.data?.id, to });
+      return { success: true, messageId: resendRes.data?.id, provider: 'Resend HTTPS' };
+    } catch (rErr) {
+      logger.warn({ msg: 'Resend HTTPS API error, falling back to next provider...', err: rErr.response?.data || rErr.message });
     }
   }
 
@@ -568,8 +573,13 @@ async function testEmailDelivery(targetEmail) {
   // If Resend API Key is configured, test HTTPS delivery
   if (process.env.RESEND_API_KEY) {
     try {
+      let resendFrom = process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>';
+      if (resendFrom.includes('@gmail.com') || resendFrom.includes('@yahoo.com') || resendFrom.includes('@hotmail.com')) {
+        resendFrom = 'CampusBite <onboarding@resend.dev>';
+      }
+
       const resendRes = await axios.post('https://api.resend.com/emails', {
-        from: process.env.EMAIL_FROM || 'CampusBite <onboarding@resend.dev>',
+        from: resendFrom,
         to: [to],
         subject: '🧪 CampusBite Test Email (via Resend HTTPS)',
         html: '<h2>CampusBite Test Email</h2><p>This test email was successfully dispatched via <strong>Resend HTTPS API</strong>.</p>',

@@ -47,32 +47,40 @@ export default function AdminApp() {
     );
   }
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <div style={S.page}>
       <Toaster position="top-right" containerStyle={{ top: 80, right: 20 }} toastOptions={{ duration: 3000, style: { borderRadius: '12px', fontSize: '14px', fontFamily: "'Inter', sans-serif" } }} />
       {token && user ? (
         <div>
           {/* Header */}
-          <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+          <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
               <div>
-                <div style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b' }}>CampusBite Real-Time Admin</div>
-                <div style={{ fontSize: '11px', color: '#ea580c', fontWeight: '700' }}>⚡ Real-time Command Center • NIT Jamshedpur</div>
+                <div style={{ fontSize: '15px', fontWeight: '800', color: '#1e293b', whiteSpace: 'nowrap' }}>CampusBite Admin</div>
+                <div style={{ fontSize: '10px', color: '#ea580c', fontWeight: '700', whiteSpace: 'nowrap' }}>⚡ NIT Jamshedpur Console</div>
               </div>
             </div>
 
-            <nav style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex" style={{ alignItems: 'center', gap: '4px' }}>
               <NavLink to="/dashboard">📊 Dashboard</NavLink>
               <NavLink to="/live-orders">⚡ Live Orders</NavLink>
               <NavLink to="/canteens">🏪 Canteens</NavLink>
               <NavLink to="/users">👥 Users</NavLink>
               <NavLink to="/issues">⚠️ Issues</NavLink>
               <NavLink to="/delivery-config">🚴 Delivery Tiers</NavLink>
-              <a href={STUDENT_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f97316', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
-                🍱 Student App ↗
+              <a href={STUDENT_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#f97316', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 10px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
+                🍱 Student ↗
               </a>
-              <a href={CANTEEN_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#ea580c', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 12px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
+              <a href={CANTEEN_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#ea580c', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '6px 10px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', marginLeft: '4px' }}>
                 👨‍🍳 Canteen ↗
               </a>
               <div style={{ marginLeft: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -80,9 +88,66 @@ export default function AdminApp() {
                 <button onClick={logout} style={S.btnDanger}>Sign Out</button>
               </div>
             </nav>
+
+            {/* Mobile Hamburger Button */}
+            <div className="flex lg:hidden" style={{ alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}
+                aria-label="Toggle navigation menu"
+              >
+                {mobileMenuOpen ? '✕' : '☰'}
+              </button>
+            </div>
           </header>
 
-          <main style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto' }}>
+          {/* Mobile Drawer Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+              <div style={{ paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#0f172a' }}>{user.name}</div>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</div>
+                <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '10px', fontWeight: '800', backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', padding: '2px 8px', borderRadius: '6px' }}>SYSTEM ADMINISTRATOR</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <NavLink to="/dashboard">📊 Dashboard Analytics</NavLink>
+                <NavLink to="/live-orders">⚡ Live Orders Stream</NavLink>
+                <NavLink to="/canteens">🏪 Campus Canteens</NavLink>
+                <NavLink to="/users">👥 User Database</NavLink>
+                <NavLink to="/issues">⚠️ Student Issues</NavLink>
+                <NavLink to="/delivery-config">🚴 Delivery Pricing Tiers</NavLink>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                <a
+                  href={STUDENT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ flex: 1, textAlign: 'center', color: '#f97316', fontWeight: '700', fontSize: '11px', textDecoration: 'none', padding: '8px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}
+                >
+                  🍱 Student App ↗
+                </a>
+                <a
+                  href={CANTEEN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ flex: 1, textAlign: 'center', color: '#ea580c', fontWeight: '700', fontSize: '11px', textDecoration: 'none', padding: '8px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}
+                >
+                  👨‍🍳 Canteen ↗
+                </a>
+                <button
+                  onClick={logout}
+                  style={{ backgroundColor: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '8px 12px', borderRadius: '8px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
+
+          <main className="admin-main-container">
             <Routes>
               <Route path="/dashboard" element={<AdminDashboardPage token={token} />} />
               <Route path="/live-orders" element={<AdminLiveOrdersPage token={token} />} />
@@ -93,6 +158,41 @@ export default function AdminApp() {
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </main>
+
+          {/* Mobile Bottom Docked Navigation */}
+          <nav className="flex lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 4px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
+            {[
+              { label: 'Dash', path: '/dashboard', icon: '📊' },
+              { label: 'Live', path: '/live-orders', icon: '⚡' },
+              { label: 'Canteens', path: '/canteens', icon: '🏪' },
+              { label: 'Users', path: '/users', icon: '👥' },
+              { label: 'Issues', path: '/issues', icon: '⚠️' },
+            ].map((tab) => {
+              const active = location.pathname.includes(tab.path);
+              return (
+                <Link
+                  key={tab.label}
+                  to={tab.path}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: active ? '#ea580c' : '#64748b',
+                    fontWeight: active ? '800' : '600',
+                    fontSize: '11px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '18px', lineHeight: '1.1' }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       ) : (
         <AdminLoginPage onLogin={login} />
@@ -147,12 +247,12 @@ function AdminLoginPage({ onLogin }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f1f5f9' }}>
-      <div style={{ ...S.card, maxWidth: '420px', width: '100%', padding: '40px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '72px', height: '72px', objectFit: 'contain', margin: '0 auto 14px' }} />
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#1e293b' }}>Admin Console</h1>
-          <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#64748b' }}>CampusBite • NIT Jamshedpur</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', backgroundColor: '#f1f5f9' }}>
+      <div style={{ ...S.card, maxWidth: '420px', width: '100%', padding: window.innerWidth < 480 ? '20px' : '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '64px', height: '64px', objectFit: 'contain', margin: '0 auto 12px' }} />
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>Admin Console</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>CampusBite • NIT Jamshedpur</p>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
@@ -203,6 +303,7 @@ function AdminDashboardPage({ token }) {
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
+    if (document.hidden) return;
     try {
       const [resStats, resOrders] = await Promise.all([
         axios.get(`${API_BASE}/admin/dashboard/stats`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -219,30 +320,30 @@ function AdminDashboardPage({ token }) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 2000); // 2s live sync
+    const interval = setInterval(fetchData, 5000); // 5s live sync
     return () => clearInterval(interval);
   }, [token]);
 
   const formatRupees = (p) => `₹${((p || 0) / 100).toFixed(2)}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>System Dashboard</h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Real-time campus performance metrics & live orders feed</p>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#1e293b' }}>System Dashboard</h2>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>Real-time campus performance metrics & live orders feed</p>
         </div>
-        <span style={{ backgroundColor: '#ecfdf5', color: '#16a34a', fontWeight: '700', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ backgroundColor: '#ecfdf5', color: '#16a34a', fontWeight: '700', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', animation: 'pulse 1s infinite' }} />
           ⚡ Live Auto-Sync (2s)
         </span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px' }}>
-        <StatCard icon="👥" label="Total Registered Users" value={stats?.totalUsers ?? 14} color="#1e293b" subtitle="Students & Staff" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+        <StatCard icon="👥" label="Total Users" value={stats?.totalUsers ?? 14} color="#1e293b" subtitle="Students & Staff" />
         <StatCard icon="📦" label="Orders Today" value={stats?.ordersToday ?? 6} color="#ea580c" subtitle="Campus Orders" />
         <StatCard icon="💰" label="Revenue Today" value={formatRupees(stats?.revenueTodayInPaise || 45000)} color="#16a34a" subtitle="Online Payments" />
-        <StatCard icon="🚴" label="Active Delivery Partners" value={stats?.activeDeliveryPartners ?? 3} color="#7c3aed" subtitle="Hostel Delivery" />
+        <StatCard icon="🚴" label="Active Partners" value={stats?.activeDeliveryPartners ?? 3} color="#7c3aed" subtitle="Hostel Delivery" />
       </div>
 
       {/* Live Recent Orders */}
@@ -294,6 +395,7 @@ function AdminLiveOrdersPage({ token }) {
   const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
+    if (document.hidden) return;
     try {
       const url = statusFilter !== 'ALL' ? `${API_BASE}/admin/orders?status=${statusFilter}` : `${API_BASE}/admin/orders`;
       const { data } = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -307,7 +409,7 @@ function AdminLiveOrdersPage({ token }) {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 2000); // 2s live sync
+    const interval = setInterval(fetchOrders, 5000); // 5s live sync
     return () => clearInterval(interval);
   }, [token, statusFilter]);
 
@@ -680,7 +782,7 @@ function DeliveryConfigPage({ token }) {
       </div>
 
       <div style={S.card}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', textAlign: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', textAlign: 'center' }}>
           {[
             { label: '1 Order (SOLO)', fee: '₹20.00', color: '#ea580c', desc: 'Single delivery, standard fee' },
             { label: '2–3 Orders (SMALL)', fee: '₹15.00', color: '#2563eb', desc: 'Small batch, shared cost' },

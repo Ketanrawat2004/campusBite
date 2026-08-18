@@ -4,13 +4,16 @@ import { useCart } from '../context/CartContext';
 import axiosClient from '../api/client';
 import toast from 'react-hot-toast';
 
+const menuCache = new Map();
+
 export default function CanteenDetailPage() {
   const { id: canteenId } = useParams();
   const { dispatch } = useCart();
 
-  const [canteen, setCanteen] = useState(null);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = menuCache.get(canteenId);
+  const [canteen, setCanteen] = useState(() => cached?.canteen || null);
+  const [categories, setCategories] = useState(() => cached?.categories || []);
+  const [loading, setLoading] = useState(() => !cached);
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [vegOnlyFilter, setVegOnlyFilter] = useState(false);
   const [itemSearch, setItemSearch] = useState('');
@@ -29,8 +32,11 @@ export default function CanteenDetailPage() {
           axiosClient.get(`/canteens/${canteenId}/menu`),
         ]);
         if (isMounted) {
-          setCanteen(canteenRes.data.data);
-          setCategories(menuRes.data.data.categories || []);
+          const cData = canteenRes.data.data;
+          const catData = menuRes.data.data.categories || [];
+          menuCache.set(canteenId, { canteen: cData, categories: catData });
+          setCanteen(cData);
+          setCategories(catData);
         }
       } catch (err) {
         console.error('Fetch canteen error:', err);
@@ -40,6 +46,7 @@ export default function CanteenDetailPage() {
     };
 
     const pollCanteenStatus = async () => {
+      if (document.hidden) return;
       try {
         const canteenRes = await axiosClient.get(`/canteens/${canteenId}`);
         if (isMounted && canteenRes.data?.data) {
@@ -51,7 +58,7 @@ export default function CanteenDetailPage() {
     };
 
     loadInitialMenu();
-    const interval = setInterval(pollCanteenStatus, 2000);
+    const interval = setInterval(pollCanteenStatus, 12000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -95,7 +102,6 @@ export default function CanteenDetailPage() {
   const handleOpenCustomModal = (item) => {
     if (item.customizations && item.customizations.length > 0) {
       setSelectedItemForCustom(item);
-      // Pre-select first option for required groups
       const defaults = {};
       item.customizations.forEach((g) => {
         if (g.options && g.options.length > 0) {
@@ -110,16 +116,16 @@ export default function CanteenDetailPage() {
 
   if (loading) {
     return (
-      <div className="page-container space-y-6">
-        <div className="card h-48 skeleton" />
-        <div className="card h-96 skeleton" />
+      <div className="page-container py-6 space-y-6 px-3 sm:px-6 lg:px-8">
+        <div className="card h-48 bg-slate-100 animate-pulse rounded-2xl" />
+        <div className="card h-96 bg-slate-100 animate-pulse rounded-2xl" />
       </div>
     );
   }
 
   if (!canteen) {
     return (
-      <div className="page-container text-center py-16 card">
+      <div className="page-container text-center py-16 card px-4 my-8">
         <h2 className="text-xl font-bold text-gray-800">Canteen not found</h2>
       </div>
     );
@@ -140,42 +146,42 @@ export default function CanteenDetailPage() {
     .filter((cat) => (activeCategory === 'ALL' || cat._id === activeCategory) && cat.items.length > 0);
 
   return (
-    <div className="page-container space-y-6 animate-fade-in">
+    <div className="page-container py-4 sm:py-6 space-y-5 sm:space-y-6 animate-fade-in px-3 sm:px-6 lg:px-8">
       {/* Canteen Header Card */}
-      <section className="card p-6 sm:p-8 relative overflow-hidden bg-gradient-to-r from-surface-900 via-surface-800 to-surface-900 text-white shadow-elevated">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
+      <section className="card p-4 sm:p-6 md:p-8 relative overflow-hidden bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white shadow-lg rounded-2xl sm:rounded-3xl border border-slate-800">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 relative z-10">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {canteen.statusMode === 'BUSY' ? (
-                <span className="bg-amber-500 text-white font-extrabold text-xs px-3 py-1 rounded-full shadow-md animate-pulse">
+                <span className="bg-amber-500 text-white font-extrabold text-[10px] sm:text-xs px-2.5 py-1 rounded-full shadow-md animate-pulse">
                   ⚡ PEAK RUSH HOUR
                 </span>
               ) : canteen.acceptingOrders && canteen.statusMode !== 'OFFLINE' ? (
-                <span className="badge badge-green">
+                <span className="badge badge-green text-[10px] sm:text-xs">
                   ● ONLINE & ACCEPTING ORDERS
                 </span>
               ) : (
-                <span className="badge badge-red">
+                <span className="badge badge-red text-[10px] sm:text-xs">
                   🚫 QUEUE PAUSED / OFFLINE
                 </span>
               )}
               {canteen.rating?.average > 0 && (
-                <span className="text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] sm:text-xs font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md">
                   ★ {canteen.rating.average.toFixed(1)} ({canteen.rating.count} reviews)
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-display font-extrabold">{canteen.name}</h1>
-            <p className="text-sm text-gray-300 max-w-xl">{canteen.description}</p>
-            <p className="text-xs text-gray-400 font-medium">📍 {canteen.location?.name || 'Main Campus'}</p>
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl font-display font-extrabold">{canteen.name}</h1>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">{canteen.description}</p>
+            <p className="text-xs text-slate-400 font-medium">📍 {canteen.location?.name || 'Main Campus'}</p>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10 flex-shrink-0">
-            <div className="text-2xl font-display font-bold text-primary-400">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 sm:p-4 text-center border border-white/10 flex-shrink-0 self-start sm:self-center">
+            <div className="text-xl sm:text-2xl font-display font-bold text-orange-400">
               ⚡ {canteen.statusMode === 'BUSY' ? '30 mins (Rush)' : `${canteen.avgPrepTimeMinutes || 15} mins`}
             </div>
-            <div className="text-[11px] text-gray-300 mt-0.5">Average Preparation Time</div>
+            <div className="text-[10px] sm:text-[11px] text-slate-300 mt-0.5">Average Preparation Time</div>
           </div>
         </div>
 
@@ -196,15 +202,15 @@ export default function CanteenDetailPage() {
       </section>
 
       {/* Filter Bar & Category Tabs */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-gray-100 pb-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
         {/* Category Scroll Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
           <button
             onClick={() => setActiveCategory('ALL')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activeCategory === 'ALL'
-                ? 'bg-primary-500 text-white shadow-sm'
-                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
             }`}
           >
             All Items
@@ -214,10 +220,10 @@ export default function CanteenDetailPage() {
             <button
               key={cat._id}
               onClick={() => setActiveCategory(cat._id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 activeCategory === cat._id
-                  ? 'bg-primary-500 text-white shadow-sm'
-                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  ? 'bg-orange-600 text-white shadow-sm'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               {cat.name} ({cat.items?.length || 0})
@@ -226,12 +232,12 @@ export default function CanteenDetailPage() {
         </div>
 
         {/* Veg Toggle & Search */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 justify-between sm:justify-end">
           <button
             onClick={() => setVegOnlyFilter(!vegOnlyFilter)}
-            className={`btn btn-sm ${vegOnlyFilter ? 'bg-green-600 text-white' : 'btn-secondary'} whitespace-nowrap`}
+            className={`btn btn-sm ${vegOnlyFilter ? 'bg-emerald-600 text-white' : 'btn-secondary'} whitespace-nowrap text-xs py-1.5 px-3`}
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1" />
             Veg Only
           </button>
           <input
@@ -239,39 +245,39 @@ export default function CanteenDetailPage() {
             value={itemSearch}
             onChange={(e) => setItemSearch(e.target.value)}
             placeholder="Filter menu..."
-            className="input input-sm w-36 sm:w-48"
+            className="input text-xs py-1.5 px-3 w-36 sm:w-48"
           />
         </div>
       </div>
 
       {/* Menu Categories & Items List */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {filteredCategories.length === 0 ? (
-          <div className="text-center py-16 card">
+          <div className="text-center py-12 card p-4">
             <span className="text-4xl opacity-40">🥗</span>
-            <h3 className="text-base font-bold text-gray-700 mt-2">No menu items match your filter</h3>
-            <p className="text-xs text-gray-400 mt-1">Try clearing veg filter or search term.</p>
+            <h3 className="text-base font-bold text-slate-700 mt-2">No menu items match your filter</h3>
+            <p className="text-xs text-slate-400 mt-1">Try clearing veg filter or search term.</p>
           </div>
         ) : (
           filteredCategories.map((cat) => (
-            <section key={cat._id} className="space-y-4">
-              <h2 className="text-lg font-display font-bold text-gray-900 border-l-4 border-primary-500 pl-3">
+            <section key={cat._id} className="space-y-3 sm:space-y-4">
+              <h2 className="text-base sm:text-lg font-display font-bold text-slate-900 border-l-4 border-orange-600 pl-3">
                 {cat.name}
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {cat.items.map((item) => (
                   <div
                     key={item._id}
-                    className="card p-4 flex gap-4 items-start justify-between hover:border-gray-300 transition-all shadow-sm"
+                    className="card p-3.5 sm:p-4 flex gap-3 sm:gap-4 items-start justify-between hover:border-slate-300 transition-all shadow-sm"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="flex-1 min-w-0 pr-1">
+                      <div className="flex items-center gap-1.5 mb-1">
                         <span className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
-                          item.isVeg ? 'border-green-600' : 'border-red-600'
+                          item.isVeg ? 'border-emerald-600' : 'border-rose-600'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${
-                            item.isVeg ? 'bg-green-600' : 'bg-red-600'
+                            item.isVeg ? 'bg-emerald-600' : 'bg-rose-600'
                           }`} />
                         </span>
                         {item.tags?.includes('bestseller') && (
@@ -279,18 +285,18 @@ export default function CanteenDetailPage() {
                         )}
                       </div>
 
-                      <h3 className="font-display font-bold text-gray-900 text-base leading-tight">
+                      <h3 className="font-display font-bold text-slate-900 text-sm sm:text-base leading-tight">
                         {item.name}
                       </h3>
 
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+                      <p className="text-[11px] sm:text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
 
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-base font-extrabold text-gray-900">
+                      <div className="flex items-center gap-2 mt-2 sm:mt-3">
+                        <span className="text-sm sm:text-base font-extrabold text-slate-900">
                           {formatRupees(item.priceInPaise)}
                         </span>
                         {item.originalPriceInPaise > item.priceInPaise && (
-                          <span className="text-xs text-gray-400 line-through">
+                          <span className="text-xs text-slate-400 line-through">
                             {formatRupees(item.originalPriceInPaise)}
                           </span>
                         )}
@@ -307,10 +313,10 @@ export default function CanteenDetailPage() {
                             e.target.onerror = null;
                             e.target.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80';
                           }}
-                          className="w-24 h-24 rounded-2xl object-cover"
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover"
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-2xl bg-primary-50 flex items-center justify-center text-3xl">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-orange-50 flex items-center justify-center text-2xl sm:text-3xl">
                           🍱
                         </div>
                       )}
@@ -318,7 +324,7 @@ export default function CanteenDetailPage() {
                       <button
                         onClick={() => handleOpenCustomModal(item)}
                         disabled={!item.isAvailable || !canteen.acceptingOrders}
-                        className="btn btn-primary btn-sm w-full py-1.5 shadow-sm"
+                        className="btn btn-primary btn-sm w-full py-1.5 shadow-sm text-xs font-bold"
                       >
                         {!canteen.acceptingOrders
                           ? 'Closed'
@@ -339,28 +345,28 @@ export default function CanteenDetailPage() {
 
       {/* Customization Modal */}
       {selectedItemForCustom && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-elevated">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 sm:space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-lg font-display font-bold text-gray-900">
+                <h3 className="text-base sm:text-lg font-display font-bold text-slate-900">
                   Customize "{selectedItemForCustom.name}"
                 </h3>
-                <p className="text-xs text-gray-500">Select options below</p>
+                <p className="text-xs text-slate-500">Select options below</p>
               </div>
               <button
                 onClick={() => setSelectedItemForCustom(null)}
-                className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 flex items-center justify-center text-sm font-bold"
               >
                 ✕
               </button>
             </div>
 
             {/* Customization Groups */}
-            <div className="space-y-4 max-h-60 overflow-y-auto pr-1">
+            <div className="space-y-3 sm:space-y-4 max-h-60 overflow-y-auto pr-1">
               {selectedItemForCustom.customizations.map((group) => (
-                <div key={group.groupName} className="space-y-2">
-                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
+                <div key={group.groupName} className="space-y-1.5 sm:space-y-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                     {group.groupName}
                   </label>
                   <div className="space-y-1.5">
@@ -375,14 +381,14 @@ export default function CanteenDetailPage() {
                               [group.groupName]: opt,
                             })
                           }
-                          className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-colors text-sm ${
+                          className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl border cursor-pointer transition-colors text-xs sm:text-sm ${
                             isSelected
-                              ? 'border-primary-500 bg-primary-50 text-primary-900 font-semibold'
-                              : 'border-gray-200 hover:bg-gray-50 text-gray-700'
+                              ? 'border-orange-500 bg-orange-50 text-orange-950 font-semibold'
+                              : 'border-slate-200 hover:bg-slate-50 text-slate-700'
                           }`}
                         >
                           <span>{opt.name}</span>
-                          <span className="text-xs font-bold">
+                          <span className="text-xs font-bold text-orange-600">
                             {opt.additionalPriceInPaise > 0
                               ? `+${formatRupees(opt.additionalPriceInPaise)}`
                               : 'Free'}
@@ -395,10 +401,10 @@ export default function CanteenDetailPage() {
               ))}
             </div>
 
-            <div className="pt-3 border-t border-gray-100 flex gap-3">
+            <div className="pt-3 border-t border-slate-100 flex gap-2 sm:gap-3">
               <button
                 onClick={() => setSelectedItemForCustom(null)}
-                className="btn btn-secondary flex-1"
+                className="btn btn-secondary flex-1 text-xs sm:text-sm py-2"
               >
                 Cancel
               </button>
@@ -413,7 +419,7 @@ export default function CanteenDetailPage() {
                     }))
                   )
                 }
-                className="btn btn-primary flex-1"
+                className="btn btn-primary flex-1 text-xs sm:text-sm py-2"
               >
                 Add to Cart
               </button>

@@ -103,24 +103,24 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="page-container max-w-3xl py-8 space-y-8 animate-fade-in">
-      <div className="border-b border-slate-200 pb-4">
-        <h1 className="text-3xl font-display font-extrabold text-slate-900">My Student Profile</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage personal account details, WhatsApp mobile number & security settings</p>
+    <div className="page-container max-w-3xl py-4 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in px-3 sm:px-6 lg:px-8">
+      <div className="border-b border-slate-200 pb-3 sm:pb-4">
+        <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900">My Student Profile</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1">Manage personal account details, WhatsApp mobile number & security settings</p>
       </div>
 
       {/* Account Info */}
-      <div className="card p-6 space-y-4">
-        <h2 className="text-base font-bold text-slate-900 font-display">Personal Information</h2>
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4 rounded-2xl sm:rounded-3xl">
+        <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">Personal Information</h2>
+        <form onSubmit={handleUpdateProfile} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Full Name</label>
               <input
                 type="text"
                 value={profileForm.name}
                 onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                className="input"
+                className="input text-xs sm:text-sm"
               />
             </div>
             <div>
@@ -134,27 +134,27 @@ export default function ProfilePage() {
                 value={profileForm.phone}
                 onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
                 placeholder="10-digit mobile number..."
-                className="input"
+                className="input text-xs sm:text-sm"
               />
             </div>
           </div>
-          <button type="submit" disabled={loadingProfile} className="btn btn-primary font-bold shadow-sm">
+          <button type="submit" disabled={loadingProfile} className="btn btn-primary font-bold shadow-sm text-xs sm:text-sm py-2 px-4">
             {loadingProfile ? 'Saving...' : 'Save Profile Changes'}
           </button>
         </form>
       </div>
 
       {/* Hostel & Room Details */}
-      <div className="card p-6 space-y-4">
-        <h2 className="text-base font-bold text-slate-900 font-display">Default Hostel & Room</h2>
-        <form onSubmit={handleUpdateHostel} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4 rounded-2xl sm:rounded-3xl">
+        <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">Default Hostel & Room</h2>
+        <form onSubmit={handleUpdateHostel} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hostel</label>
               <select
                 value={hostelForm.hostelId}
                 onChange={(e) => setHostelForm({ ...hostelForm, hostelId: e.target.value })}
-                className="input"
+                className="input text-xs sm:text-sm"
               >
                 <option value="">Select Hostel</option>
                 {hostels.map((h) => (
@@ -169,7 +169,7 @@ export default function ProfilePage() {
                 value={hostelForm.roomNumber}
                 onChange={(e) => setHostelForm({ ...hostelForm, roomNumber: e.target.value })}
                 placeholder="e.g. A-214"
-                className="input"
+                className="input text-xs sm:text-sm"
               />
             </div>
             <div>
@@ -178,7 +178,7 @@ export default function ProfilePage() {
                 type="text"
                 value={hostelForm.rollNumber}
                 onChange={(e) => setHostelForm({ ...hostelForm, rollNumber: e.target.value })}
-                className="input"
+                className="input text-xs sm:text-sm"
               />
             </div>
             <div>
@@ -186,29 +186,29 @@ export default function ProfilePage() {
               <select
                 value={hostelForm.year}
                 onChange={(e) => setHostelForm({ ...hostelForm, year: e.target.value })}
-                className="input"
+                className="input text-xs sm:text-sm"
               >
                 {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>Year {y}</option>)}
               </select>
             </div>
           </div>
-          <button type="submit" disabled={loadingHostel} className="btn btn-primary font-bold shadow-sm">
+          <button type="submit" disabled={loadingHostel} className="btn btn-primary font-bold shadow-sm text-xs sm:text-sm py-2 px-4">
             {loadingHostel ? 'Saving...' : 'Update Hostel Details'}
           </button>
         </form>
       </div>
 
       {/* Change Password */}
-      <div className="card p-6 space-y-4">
-        <h2 className="text-base font-bold text-slate-900 font-display">Change Password</h2>
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+      <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4 rounded-2xl sm:rounded-3xl">
+        <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">Change Password</h2>
+        <form onSubmit={handleChangePassword} className="space-y-3 sm:space-y-4 max-w-md">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Current Password</label>
             <input
               type="password"
               value={passForm.currentPassword}
               onChange={(e) => setPassForm({ ...passForm, currentPassword: e.target.value })}
-              className="input"
+              className="input text-xs sm:text-sm"
             />
           </div>
           <div>
@@ -218,35 +218,35 @@ export default function ProfilePage() {
               value={passForm.newPassword}
               onChange={(e) => setPassForm({ ...passForm, newPassword: e.target.value })}
               placeholder="At least 8 characters"
-              className="input"
+              className="input text-xs sm:text-sm"
             />
           </div>
-          <button type="submit" disabled={loadingPass} className="btn btn-secondary font-bold">
+          <button type="submit" disabled={loadingPass} className="btn btn-secondary font-bold text-xs sm:text-sm py-2 px-4">
             {loadingPass ? 'Updating...' : 'Change Password'}
           </button>
         </form>
       </div>
 
       {/* Danger Zone: Delete Account & Remove Data */}
-      <div className="card p-6 space-y-4 border-2 border-rose-200 bg-rose-50/50">
+      <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4 border-2 border-rose-200 bg-rose-50/50 rounded-2xl sm:rounded-3xl">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-xl font-bold shadow-sm">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center text-lg sm:text-xl font-bold shadow-sm flex-shrink-0">
             🗑️
           </div>
           <div>
-            <h2 className="text-base font-bold text-rose-950 font-display">Delete Account & Permanent Data Removal</h2>
-            <p className="text-xs text-rose-700">Permanently erase your email, password, profile details, and account from database</p>
+            <h2 className="text-sm sm:text-base font-bold text-rose-950 font-display">Delete Account & Permanent Data Removal</h2>
+            <p className="text-[11px] sm:text-xs text-rose-700">Permanently erase your email, password, profile details, and account from database</p>
           </div>
         </div>
 
-        <p className="text-xs text-rose-800 leading-relaxed">
+        <p className="text-[11px] sm:text-xs text-rose-800 leading-relaxed">
           Clicking this button will immediately wipe your account record from the database. All stored credentials (email, hashed password, mobile number) will be permanently deleted.
         </p>
 
         <button
           onClick={handleDeleteAccount}
           disabled={deletingAccount}
-          className="btn bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm"
+          className="btn bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-4 sm:px-5 py-2.5 rounded-xl shadow-sm"
         >
           {deletingAccount ? 'Deleting Account...' : '🗑️ Delete My Account & Remove All Data'}
         </button>

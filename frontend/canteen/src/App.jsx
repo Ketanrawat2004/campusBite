@@ -101,45 +101,52 @@ export default function CanteenApp() {
     );
   }
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <Toaster position="top-right" containerStyle={{ top: 80, right: 20 }} toastOptions={{ duration: 3000 }} />
       {token && user ? (
         <div>
           {/* Header Light Theme */}
-          <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+          <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 40, boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>CampusBite Canteen Staff</h1>
-                  <span style={{ backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontSize: '11px', fontWeight: '800', padding: '2px 8px', borderRadius: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: '6px', height: '6px', backgroundColor: '#10b981', borderRadius: '50%', display: 'inline-block' }} />
-                    LIVE 2S SYNC
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <h1 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#0f172a', whiteSpace: 'nowrap' }}>CampusBite Canteen</h1>
+                  <span style={{ backgroundColor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', fontSize: '10px', fontWeight: '800', padding: '1px 6px', borderRadius: '10px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <span style={{ width: '5px', height: '5px', backgroundColor: '#10b981', borderRadius: '50%', display: 'inline-block' }} />
+                    LIVE 2S
                   </span>
                 </div>
-                <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#64748b' }}>{user.name} ({user.email})</p>
+                <p style={{ margin: '1px 0 0 0', fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}>{user.name}</p>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex" style={{ alignItems: 'center', gap: '12px' }}>
               <button
                 onClick={toggleSound}
                 title="Toggle audio notification chime for incoming orders"
-                style={{ backgroundColor: soundEnabled ? '#fff7ed' : '#f1f5f9', color: soundEnabled ? '#ea580c' : '#64748b', border: soundEnabled ? '1px solid #ffedd5' : '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ backgroundColor: soundEnabled ? '#fff7ed' : '#f1f5f9', color: soundEnabled ? '#ea580c' : '#64748b', border: soundEnabled ? '1px solid #ffedd5' : '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                {soundEnabled ? '🔊 Sound Alerts ON' : '🔇 Muted'}
+                {soundEnabled ? '🔊 Sound ON' : '🔇 Muted'}
               </button>
 
-              <nav style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f8fafc', padding: '4px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#f8fafc', padding: '4px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                 <Link
                   to="/queue"
                   style={{
-                    padding: '6px 14px',
+                    padding: '6px 12px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     textDecoration: 'none',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     backgroundColor: location.pathname.includes('/queue') ? '#ea580c' : 'transparent',
                     color: location.pathname.includes('/queue') ? '#ffffff' : '#475569',
                     transition: 'all 0.15s ease',
@@ -150,11 +157,11 @@ export default function CanteenApp() {
                 <Link
                   to="/menu"
                   style={{
-                    padding: '6px 14px',
+                    padding: '6px 12px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     textDecoration: 'none',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     backgroundColor: location.pathname.includes('/menu') ? '#ea580c' : 'transparent',
                     color: location.pathname.includes('/menu') ? '#ffffff' : '#475569',
                     transition: 'all 0.15s ease',
@@ -165,11 +172,11 @@ export default function CanteenApp() {
                 <Link
                   to="/issues"
                   style={{
-                    padding: '6px 14px',
+                    padding: '6px 12px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     textDecoration: 'none',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     backgroundColor: location.pathname.includes('/issues') ? '#ea580c' : 'transparent',
                     color: location.pathname.includes('/issues') ? '#ffffff' : '#475569',
                     transition: 'all 0.15s ease',
@@ -180,11 +187,11 @@ export default function CanteenApp() {
                 <Link
                   to="/analytics"
                   style={{
-                    padding: '6px 14px',
+                    padding: '6px 12px',
                     borderRadius: '8px',
                     fontWeight: 'bold',
                     textDecoration: 'none',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     backgroundColor: location.pathname.includes('/analytics') ? '#ea580c' : 'transparent',
                     color: location.pathname.includes('/analytics') ? '#ffffff' : '#475569',
                     transition: 'all 0.15s ease',
@@ -205,14 +212,91 @@ export default function CanteenApp() {
 
               <button
                 onClick={logout}
-                style={{ backgroundColor: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '6px 14px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
+                style={{ backgroundColor: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '6px 12px', borderRadius: '10px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
               >
                 Sign Out
               </button>
             </div>
+
+            {/* Mobile Controls Right */}
+            <div className="flex lg:hidden" style={{ alignItems: 'center', gap: '8px' }}>
+              <button
+                onClick={toggleSound}
+                title="Toggle Sound"
+                style={{ backgroundColor: soundEnabled ? '#fff7ed' : '#f1f5f9', color: soundEnabled ? '#ea580c' : '#64748b', border: soundEnabled ? '1px solid #ffedd5' : '1px solid #cbd5e1', padding: '6px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                {soundEnabled ? '🔊' : '🔇'}
+              </button>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '6px 10px', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}
+                aria-label="Toggle navigation menu"
+              >
+                {mobileMenuOpen ? '✕' : '☰'}
+              </button>
+            </div>
           </header>
 
-          <main style={{ padding: '24px', maxWidth: '1280px', margin: '0 auto' }}>
+          {/* Mobile Drawer Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+              <div style={{ paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#0f172a' }}>{user.name}</div>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</div>
+                <span style={{ display: 'inline-block', marginTop: '4px', fontSize: '10px', fontWeight: '800', backgroundColor: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', padding: '2px 8px', borderRadius: '6px' }}>CANTEEN OPERATOR</span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <Link
+                  to="/queue"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ padding: '10px 14px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px', backgroundColor: location.pathname.includes('/queue') ? '#ea580c' : '#f8fafc', color: location.pathname.includes('/queue') ? '#ffffff' : '#334155' }}
+                >
+                  📋 Kitchen Queue
+                </Link>
+                <Link
+                  to="/menu"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ padding: '10px 14px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px', backgroundColor: location.pathname.includes('/menu') ? '#ea580c' : '#f8fafc', color: location.pathname.includes('/menu') ? '#ffffff' : '#334155' }}
+                >
+                  🍔 Menu & Stock Availability
+                </Link>
+                <Link
+                  to="/issues"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ padding: '10px 14px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px', backgroundColor: location.pathname.includes('/issues') ? '#ea580c' : '#f8fafc', color: location.pathname.includes('/issues') ? '#ffffff' : '#334155' }}
+                >
+                  ⚠️ Student Issue Reports
+                </Link>
+                <Link
+                  to="/analytics"
+                  onClick={() => setMobileMenuOpen(false)}
+                  style={{ padding: '10px 14px', borderRadius: '8px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px', backgroundColor: location.pathname.includes('/analytics') ? '#ea580c' : '#f8fafc', color: location.pathname.includes('/analytics') ? '#ffffff' : '#334155' }}
+                >
+                  📊 Daily Revenue & Analytics
+                </Link>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
+                <a
+                  href={STUDENT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ flex: 1, textAlign: 'center', color: '#ea580c', fontWeight: '700', fontSize: '12px', textDecoration: 'none', padding: '8px', borderRadius: '8px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa' }}
+                >
+                  🍱 Student App ↗
+                </a>
+                <button
+                  onClick={logout}
+                  style={{ flex: 1, backgroundColor: '#fff1f2', color: '#e11d48', border: '1px solid #fecdd3', padding: '8px', borderRadius: '8px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Sign Out 🚪
+                </button>
+              </div>
+            </div>
+          )}
+
+          <main className="canteen-main-content">
             <Routes>
               <Route path="/queue" element={<OrderQueuePage token={token} user={user} soundEnabled={soundEnabled} />} />
               <Route path="/menu" element={<MenuMgmtPage token={token} user={user} />} />
@@ -221,6 +305,40 @@ export default function CanteenApp() {
               <Route path="*" element={<Navigate to="/queue" replace />} />
             </Routes>
           </main>
+
+          {/* Mobile Bottom Docked Navigation */}
+          <nav className="flex lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 8px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
+            {[
+              { label: 'Queue', path: '/queue', icon: '📋' },
+              { label: 'Menu', path: '/menu', icon: '🍔' },
+              { label: 'Issues', path: '/issues', icon: '⚠️' },
+              { label: 'Stats', path: '/analytics', icon: '📊' },
+            ].map((tab) => {
+              const active = location.pathname.includes(tab.path);
+              return (
+                <Link
+                  key={tab.label}
+                  to={tab.path}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    color: active ? '#ea580c' : '#64748b',
+                    fontWeight: active ? '800' : '600',
+                    fontSize: '11px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '18px', lineHeight: '1.1' }}>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       ) : (
         <CanteenLoginPage onLogin={login} />
@@ -277,10 +395,11 @@ function CanteenLoginPage({ onLogin }) {
           const container = document.getElementById('canteen-google-btn');
           if (container) {
             container.innerHTML = '';
+            const btnWidth = Math.min(356, Math.max(240, window.innerWidth - 64));
             window.google.accounts.id.renderButton(container, {
               theme: 'outline',
               size: 'large',
-              width: 356,
+              width: btnWidth,
               text: 'signin_with',
               shape: 'rectangular',
             });
@@ -312,12 +431,12 @@ function CanteenLoginPage({ onLogin }) {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '36px', maxWidth: '440px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', backgroundColor: '#f8fafc' }}>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '20px' : '36px', maxWidth: '440px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '72px', height: '72px', objectFit: 'contain', margin: '0 auto 12px auto' }} />
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#0f172a' }}>Canteen Staff Portal</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>NIT Jamshedpur • Kitchen Operations & Menu Control</p>
+          <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '64px', height: '64px', objectFit: 'contain', margin: '0 auto 12px auto' }} />
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#0f172a' }}>Canteen Staff Portal</h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>NIT Jamshedpur • Kitchen Operations & Menu Control</p>
         </div>
 
         {/* Google OAuth Button */}
@@ -460,6 +579,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
   };
 
   const fetchQueue = async () => {
+    if (document.hidden) return;
     try {
       const targetQuery = selectedCanteenId && selectedCanteenId !== 'ALL'
         ? `canteenId=${selectedCanteenId}`
@@ -484,15 +604,6 @@ function OrderQueuePage({ token, user, soundEnabled }) {
       previousOrderIdsRef.current = newIdSet;
 
       setOrders(fetchedOrders);
-
-      // Also sync selected canteen statusMode from server
-      const targetId = selectedCanteenId && selectedCanteenId !== 'ALL' ? selectedCanteenId : (user?.canteenProfile?.canteenId || (canteensList[0] ? canteensList[0]._id : null));
-      if (targetId) {
-        const cRes = await axios.get(`${API_BASE}/canteens/${targetId}`);
-        if (cRes.data?.data?.statusMode) {
-          setCanteenStatus(cRes.data.data.statusMode);
-        }
-      }
     } catch (err) {
       console.error('Queue fetch error:', err);
     } finally {
@@ -502,7 +613,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 2000); // 2s real-time queue refresh
+    const interval = setInterval(fetchQueue, 4000); // 4s real-time queue refresh
     return () => clearInterval(interval);
   }, [token, soundEnabled, selectedCanteenId]);
 
@@ -672,36 +783,36 @@ function OrderQueuePage({ token, user, soundEnabled }) {
       </div>
 
       {/* KPI Live Stats Bar */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#ea580c' }}>📋</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#ea580c', flexShrink: 0 }}>📋</div>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>{activeOrdersCount}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Active Pending Orders</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>{activeOrdersCount}</div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Active Pending</div>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#d97706' }}>🍳</div>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#d97706', flexShrink: 0 }}>🍳</div>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>{preparingCount}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>In Kitchen Preparation</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>{preparingCount}</div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Preparing</div>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#059669' }}>🍱</div>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#059669', flexShrink: 0 }}>🍱</div>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>{readyCount}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Ready for Pickup / Dispatch</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>{readyCount}</div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Ready / Dispatch</div>
           </div>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-          <div style={{ width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', color: '#2563eb' }}>💰</div>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', color: '#2563eb', flexShrink: 0 }}>💰</div>
           <div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: '#ea580c' }}>{formatRupees(totalRevenuePaise)}</div>
-            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Today's Total Revenue</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#ea580c' }}>{formatRupees(totalRevenuePaise)}</div>
+            <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Today's Revenue</div>
           </div>
         </div>
       </div>
@@ -709,7 +820,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
       {/* Multi-Filter & Search Bar */}
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
             <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#94a3b8' }}>🔍</span>
             <input
               type="text"
@@ -740,11 +851,11 @@ function OrderQueuePage({ token, user, soundEnabled }) {
         {/* Status Filter Tabs */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
           {[
-            { id: 'ALL', label: `All (${orders.length})` },
-            { id: 'CONFIRMED', label: `New Confirmed (${orders.filter((o) => o.status === 'CONFIRMED').length})` },
-            { id: 'PREPARING', label: `In Kitchen (${orders.filter((o) => o.status === 'PREPARING').length})` },
-            { id: 'READY', label: `Ready (${orders.filter((o) => o.status === 'READY').length})` },
-            { id: 'COMPLETED', label: `Delivered / Completed (${orders.filter((o) => ['COMPLETED', 'DELIVERED'].includes(o.status)).length})` },
+            { id: 'ALL', label: `All Orders (${orders.length})` },
+            { id: 'CONFIRMED', label: `Confirmed (${orders.filter((o) => o.status === 'CONFIRMED').length})` },
+            { id: 'PREPARING', label: `Preparing (${preparingCount})` },
+            { id: 'READY', label: `Ready (${readyCount})` },
+            { id: 'COMPLETED', label: `Fulfilled (${orders.filter((o) => ['COMPLETED', 'DELIVERED'].includes(o.status)).length})` },
             { id: 'CANCELLED', label: `Cancelled (${orders.filter((o) => o.status === 'CANCELLED').length})` },
           ].map((tab) => (
             <button
@@ -777,7 +888,7 @@ function OrderQueuePage({ token, user, soundEnabled }) {
           🎉 No orders match your filter criteria! New student orders will automatically appear here.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
           {filteredOrders.map((order) => {
             const isDelivery = order.fulfillmentType === 'DELIVERY';
             const studentName = order.studentId?.name || order.studentName || 'Student';
@@ -1673,6 +1784,7 @@ function AnalyticsPage({ token }) {
   const [loading, setLoading] = useState(true);
 
   const fetchAnalytics = async () => {
+    if (document.hidden) return;
     try {
       const res = await axios.get(`${API_BASE}/orders/canteen/queue?allStatus=true`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -1687,7 +1799,7 @@ function AnalyticsPage({ token }) {
 
   useEffect(() => {
     fetchAnalytics();
-    const interval = setInterval(fetchAnalytics, 2000); // Live 2-second real-time sync
+    const interval = setInterval(fetchAnalytics, 6000); // 6-second real-time sync
     return () => clearInterval(interval);
   }, [token]);
 
@@ -1749,86 +1861,86 @@ function AnalyticsPage({ token }) {
       ) : (
         <>
           {/* Top Metric Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Gross Revenue</div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#ea580c', marginTop: '6px' }}>{formatRupees(totalRevenuePaise)}</div>
-              <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold', marginTop: '4px' }}>✓ Verified Online Payments</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Gross Revenue</div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#ea580c', marginTop: '4px' }}>{formatRupees(totalRevenuePaise)}</div>
+              <div style={{ fontSize: '11px', color: '#10b981', fontWeight: 'bold', marginTop: '2px' }}>✓ Online Payments</div>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Total Orders</div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', marginTop: '6px' }}>{totalOrders}</div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Orders Processed Today</div>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Total Orders</div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', marginTop: '4px' }}>{totalOrders}</div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Processed Today</div>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Fulfillment Success</div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#059669', marginTop: '6px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Success Rate</div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#059669', marginTop: '4px' }}>
                 {totalOrders > 0 ? `${Math.round((deliveredCount / totalOrders) * 100)}%` : '100%'}
               </div>
-              <div style={{ fontSize: '12px', color: '#059669', marginTop: '4px' }}>{deliveredCount} Orders Delivered</div>
+              <div style={{ fontSize: '11px', color: '#059669', marginTop: '2px' }}>{deliveredCount} Delivered</div>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Cancellation Rate</div>
-              <div style={{ fontSize: '28px', fontWeight: '800', color: '#e11d48', marginTop: '6px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b', textTransform: 'uppercase' }}>Cancellation</div>
+              <div style={{ fontSize: '22px', fontWeight: '800', color: '#e11d48', marginTop: '4px' }}>
                 {totalOrders > 0 ? `${Math.round((cancelledCount / totalOrders) * 100)}%` : '0%'}
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{cancelledCount} Cancelled</div>
+              <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>{cancelledCount} Cancelled</div>
             </div>
           </div>
 
           {/* Charts Row: Pie Chart + Hourly Bar Graph */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {/* Pie / Donut Chart */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>🥧 Order Status Distribution</h3>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Live Pie Chart</span>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>🥧 Status Distribution</h3>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Pie Chart</span>
               </div>
               <SVGDonutChart data={statusPieData} />
             </div>
 
             {/* Hourly Sales Bar Graph */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>📈 Peak Hourly Revenue Trend</h3>
-                <span style={{ fontSize: '11px', color: '#ea580c', fontWeight: 'bold' }}>Live Bar Graph</span>
+                <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>📈 Peak Hourly Revenue</h3>
+                <span style={{ fontSize: '11px', color: '#ea580c', fontWeight: 'bold' }}>Bar Graph</span>
               </div>
               <SVGBarChart orders={orders} />
             </div>
           </div>
 
           {/* Fulfillment Distribution + Bestsellers Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {/* Fulfillment Type Breakdown */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>🚴 Fulfillment Channel Ratio</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div style={{ backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '14px', padding: '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '32px', marginBottom: '6px' }}>🚴</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#ea580c' }}>{deliveryOrdersCount}</div>
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#c2410c' }}>Hostel Room Delivery</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                    {totalOrders > 0 ? `${Math.round((deliveryOrdersCount / totalOrders) * 100)}% of total` : '0%'}
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>🚴 Fulfillment Channel Ratio</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', marginBottom: '4px' }}>🚴</div>
+                  <div style={{ fontSize: '20px', fontWeight: '800', color: '#ea580c' }}>{deliveryOrdersCount}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#c2410c' }}>Room Delivery</div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                    {totalOrders > 0 ? `${Math.round((deliveryOrdersCount / totalOrders) * 100)}%` : '0%'}
                   </div>
                 </div>
 
-                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '14px', padding: '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '32px', marginBottom: '6px' }}>🏪</div>
-                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#2563eb' }}>{pickupOrdersCount}</div>
-                  <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#1d4ed8' }}>Counter Pickup</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                    {totalOrders > 0 ? `${Math.round((pickupOrdersCount / totalOrders) * 100)}% of total` : '0%'}
+                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '28px', marginBottom: '4px' }}>🏪</div>
+                  <div style={{ fontSize: '20px', fontWeight: '800', color: '#2563eb' }}>{pickupOrdersCount}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#1d4ed8' }}>Counter Pickup</div>
+                  <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                    {totalOrders > 0 ? `${Math.round((pickupOrdersCount / totalOrders) * 100)}%` : '0%'}
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Bestseller Food Ranking */}
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px' }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: 'bold', color: '#0f172a' }}>🔥 Top Bestselling Food Items</h3>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '20px' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: 'bold', color: '#0f172a' }}>🔥 Top Bestselling Food Items</h3>
               {topItems.length === 0 ? (
                 <p style={{ fontSize: '13px', color: '#94a3b8' }}>No item sales recorded yet today.</p>
               ) : (

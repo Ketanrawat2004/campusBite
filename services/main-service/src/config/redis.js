@@ -62,24 +62,44 @@ class InMemoryRedisMock {
 function getRedisClient() {
   if (redisClient) return redisClient;
 
-  const url = process.env.REDIS_URL || 'redis://localhost:6379';
+  // If no external REDIS_URL is provided, use ultra-fast In-Memory Redis Mock instantly (0ms latency, zero connection timeouts)
+  if (!process.env.REDIS_URL) {
+    redisClient = new InMemoryRedisMock();
+    return redisClient;
+  }
 
-  redisClient = new Redis(url, {
-    maxRetriesPerRequest: 1,
-    lazyConnect: true,
-    enableReadyCheck: false,
-    retryStrategy: () => null, // Don't loop endlessly if missing
-  });
+  const url = process.env.REDIS_URL;
 
-  redisClient.on('error', (err) => {
-    logger.debug({ msg: 'Redis offline — using in-memory Redis fallback', err: err.message });
-  });
+  try {
+    redisClient = new Redis(url, {
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+      enableReadyCheck: false,
+      connectTimeout: 2000,
+      retryStrategy: () => null, // Don't loop endlessly if missing
+    });
+
+    redisClient.on('error', (err) => {
+      logger.debug({ msg: 'Redis error — fallback active', err: err.message });
+      redisClient = new InMemoryRedisMock();
+    });
+  } catch (err) {
+    redisClient = new InMemoryRedisMock();
+  }
 
   return redisClient;
 }
 
 async function connectRedis() {
+  if (!process.env.REDIS_URL) {
+    redisClient = new InMemoryRedisMock();
+    logger.info({ msg: 'Using In-Memory Cache (0ms latency, zero network overhead)' });
+    return redisClient;
+  }
+
   const client = getRedisClient();
+  if (client instanceof InMemoryRedisMock) return client;
+
   try {
     await client.connect();
     logger.info({ msg: 'Redis connected' });

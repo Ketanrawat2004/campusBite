@@ -250,52 +250,52 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="page-container max-w-4xl py-8 space-y-8 animate-fade-in relative">
+    <div className="page-container max-w-4xl py-4 sm:py-8 space-y-6 sm:space-y-8 animate-fade-in relative px-3 sm:px-6 lg:px-8">
       {/* High-Performance Payment Processing Overlay */}
       {isProcessingOrder && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white p-6 animate-fade-in">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
-          <h3 className="text-xl font-display font-extrabold text-white mb-1">Payment Verified & Confirming Order... ⚡</h3>
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white p-6 animate-fade-in text-center">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <h3 className="text-lg sm:text-xl font-display font-extrabold text-white mb-1">Payment Verified & Confirming Order... ⚡</h3>
           <p className="text-xs text-slate-300">Generating tax invoice and preparing your live order status dashboard...</p>
         </div>
       )}
 
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <span className="badge badge-orange font-bold">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="badge badge-orange font-bold text-[10px] sm:text-xs">
             💳 Online Payment Active
           </span>
         </div>
 
-        <h1 className="text-3xl font-display font-extrabold text-slate-900">Checkout</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900">Checkout</h1>
+        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
           Ordering from <strong className="text-orange-600">{cart.canteenName}</strong> ({totalItems} items)
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Main Form (Left 2 cols) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Step 1: Fulfillment Type */}
-          <div className="card p-6 space-y-4">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+          <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
               <span>1. Choose Delivery Method</span>
             </h2>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => setFulfillmentType('DELIVERY')}
-                className={`p-4 rounded-2xl border text-left transition-all ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                   fulfillmentType === 'DELIVERY'
                     ? 'border-orange-500 bg-orange-50/60 ring-2 ring-orange-500/20'
                     : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <div className="text-2xl mb-2">🚴</div>
-                <div className="font-bold text-slate-900 text-sm">Hostel Room Delivery</div>
-                <div className="text-xs text-slate-500 mt-0.5">Delivered by canteen staff</div>
-                <div className="mt-2 text-xs font-bold text-orange-600">
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🚴</div>
+                <div className="font-bold text-slate-900 text-xs sm:text-sm">Hostel Room Delivery</div>
+                <div className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Delivered by canteen staff</div>
+                <div className="mt-1.5 text-[11px] sm:text-xs font-bold text-orange-600">
                   ₹10–20 (Smart Pool Savings)
                 </div>
               </button>
@@ -303,16 +303,16 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => setFulfillmentType('PICKUP')}
-                className={`p-4 rounded-2xl border text-left transition-all ${
+                className={`p-3.5 sm:p-4 rounded-2xl border text-left transition-all ${
                   fulfillmentType === 'PICKUP'
                     ? 'border-orange-500 bg-orange-50/60 ring-2 ring-orange-500/20'
                     : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <div className="text-2xl mb-2">🏪</div>
-                <div className="font-bold text-slate-900 text-sm">Canteen Pickup</div>
-                <div className="text-xs text-slate-500 mt-0.5">Collect directly from canteen counter</div>
-                <div className="mt-2 text-xs font-bold text-emerald-600">
+                <div className="text-xl sm:text-2xl mb-1.5 sm:mb-2">🏪</div>
+                <div className="font-bold text-slate-900 text-xs sm:text-sm">Canteen Pickup</div>
+                <div className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Collect directly from canteen counter</div>
+                <div className="mt-1.5 text-[11px] sm:text-xs font-bold text-emerald-600">
                   FREE (₹0 fee)
                 </div>
               </button>
@@ -321,18 +321,18 @@ export default function CheckoutPage() {
 
           {/* Step 2: Delivery Details (Hostel only) */}
           {fulfillmentType === 'DELIVERY' && (
-            <div className="card p-6 space-y-4 animate-fade-in">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <div className="card p-4 sm:p-6 space-y-3 sm:space-y-4 animate-fade-in">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 <span>2. Delivery Address</span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Hostel</label>
                   <select
                     value={selectedHostelId}
                     onChange={(e) => setSelectedHostelId(e.target.value)}
-                    className="input"
+                    className="input text-xs sm:text-sm"
                   >
                     {hostels.map((h) => (
                       <option key={h._id} value={h._id}>{h.name} ({h.shortCode})</option>
@@ -345,7 +345,7 @@ export default function CheckoutPage() {
                   <select
                     value={blockName}
                     onChange={(e) => setBlockName(e.target.value)}
-                    className="input"
+                    className="input text-xs sm:text-sm"
                   >
                     <option value="A">Block A</option>
                     <option value="B">Block B</option>
@@ -360,7 +360,7 @@ export default function CheckoutPage() {
                     value={roomNumber}
                     onChange={(e) => setRoomNumber(e.target.value)}
                     placeholder="e.g. A-214"
-                    className="input"
+                    className="input text-xs sm:text-sm"
                   />
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function CheckoutPage() {
                         key={win.id}
                         type="button"
                         onClick={() => setSelectedWindow(win)}
-                        className={`p-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                        className={`p-2 sm:p-2.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all ${
                           selectedWindow?.id === win.id
                             ? 'border-orange-500 bg-orange-50 text-orange-900 font-bold'
                             : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -393,8 +393,8 @@ export default function CheckoutPage() {
           )}
 
           {/* Special Instructions */}
-          <div className="card p-6 space-y-3">
-            <label className="block text-sm font-bold text-slate-900">Special Instructions for Canteen</label>
+          <div className="card p-4 sm:p-6 space-y-2 sm:space-y-3">
+            <label className="block text-xs sm:text-sm font-bold text-slate-900">Special Instructions for Canteen</label>
             <textarea
               rows="2"
               value={specialInstructions}
@@ -406,17 +406,17 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary & Pricing (Right 1 col) */}
-        <div className="space-y-6">
-          <div className="card p-6 space-y-5 bg-slate-50 border-slate-200">
-            <h2 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-3">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="card p-4 sm:p-6 space-y-4 sm:space-y-5 bg-slate-50 border-slate-200">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 border-b border-slate-200 pb-2.5 sm:pb-3">
               Order Summary
             </h2>
 
             {/* Item list */}
-            <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
               {cart.items.map((item, idx) => (
                 <div key={idx} className="flex justify-between items-center text-xs">
-                  <span className="text-slate-700 font-medium truncate max-w-[160px]">
+                  <span className="text-slate-700 font-medium truncate max-w-[150px] sm:max-w-[160px]">
                     {item.quantity}× {item.name}
                   </span>
                   <span className="font-bold text-slate-900">
@@ -434,16 +434,16 @@ export default function CheckoutPage() {
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   placeholder="Coupon (NITFRESH20)"
-                  className="input input-sm uppercase"
+                  className="input input-sm uppercase text-xs"
                 />
-                <button onClick={handleApplyCoupon} className="btn btn-secondary btn-sm whitespace-nowrap">
+                <button onClick={handleApplyCoupon} className="btn btn-secondary btn-sm whitespace-nowrap text-xs">
                   Apply
                 </button>
               </div>
             </div>
 
             {/* Pricing Breakdown */}
-            <div className="space-y-2 pt-3 border-t border-slate-200 text-sm">
+            <div className="space-y-2 pt-2.5 sm:pt-3 border-t border-slate-200 text-xs sm:text-sm">
               <div className="flex justify-between text-slate-600">
                 <span>Food Subtotal</span>
                 <span className="font-semibold">{formatRupees(subtotalInPaise)}</span>
@@ -468,14 +468,14 @@ export default function CheckoutPage() {
                   <span className="text-base">🤝</span>
                   <div>
                     <strong>Smart Group Pool Active</strong>
-                    <p className="text-[11px] text-orange-700 mt-0.5">
+                    <p className="text-[10px] sm:text-[11px] text-orange-700 mt-0.5 leading-tight">
                       If roomies order together, delivery fee drops to ₹10–15 and savings are refunded!
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-between items-center text-lg font-extrabold text-slate-900 pt-3 border-t border-slate-200">
+              <div className="flex justify-between items-center text-base sm:text-lg font-extrabold text-slate-900 pt-2.5 sm:pt-3 border-t border-slate-200">
                 <span>Final Total</span>
                 <span className="text-orange-600">{formatRupees(totalInPaise)}</span>
               </div>
@@ -485,7 +485,7 @@ export default function CheckoutPage() {
             <button
               onClick={handlePlaceOrder}
               disabled={loading}
-              className="btn btn-primary btn-lg w-full shadow-md font-bold text-base"
+              className="btn btn-primary btn-lg w-full shadow-md font-bold text-sm sm:text-base py-3"
             >
               {loading ? 'Opening Razorpay Gateway...' : `Pay ${formatRupees(totalInPaise)}`}
             </button>

@@ -59,30 +59,30 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md animate-slide-up">
+        <div className="text-center mb-6 sm:mb-8">
           <img
             src="/images/campusbite_logo.png"
             alt="CampusBite"
-            className="w-16 h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md"
+            className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md"
           />
-          <h1 className="text-2xl font-display font-bold text-slate-900">Reset Password</h1>
-          <p className="text-slate-500 text-sm mt-1">Enter your registered email and new unique password</p>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900">Reset Password</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">Enter your registered email and new unique password</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl">
           {success ? (
             <div className="text-center space-y-4">
-              <div className="text-5xl">✅</div>
-              <p className="text-slate-700 font-semibold text-lg">Password Updated!</p>
-              <p className="text-slate-500 text-sm">Redirecting you to sign in...</p>
-              <Link to="/login" className="btn btn-primary w-full font-bold block text-center">
+              <div className="text-4xl sm:text-5xl">✅</div>
+              <p className="text-slate-700 font-semibold text-base sm:text-lg">Password Updated!</p>
+              <p className="text-slate-500 text-xs sm:text-sm">Redirecting you to sign in...</p>
+              <Link to="/login" className="btn btn-primary w-full font-bold block text-center text-xs sm:text-sm py-2.5">
                 Sign In Now →
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1" htmlFor="email">
                   Registered Email *
@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="rahul@nitjsr.ac.in"
-                  className="input bg-white text-slate-900 placeholder-slate-400"
+                  className="input bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm"
                 />
               </div>
 
@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Min 8 chars, upper, lower, number, symbol"
-                    className="input bg-white text-slate-900 placeholder-slate-400 pr-12"
+                    className="input bg-white text-slate-900 placeholder-slate-400 pr-12 text-xs sm:text-sm"
                   />
                   <button
                     type="button"
@@ -138,7 +138,7 @@ export default function ResetPasswordPage() {
                         ['Number (0-9)', strength.checks.number],
                         ['Special char (!@#…)', strength.checks.special],
                       ].map(([label, ok]) => (
-                        <div key={label} className="flex items-center gap-1.5 text-xs" style={{ color: ok ? '#22c55e' : '#94a3b8' }}>
+                        <div key={label} className="flex items-center gap-1.5 text-[11px]" style={{ color: ok ? '#22c55e' : '#94a3b8' }}>
                           <span>{ok ? '✓' : '○'}</span><span>{label}</span>
                         </div>
                       ))}
@@ -158,7 +158,7 @@ export default function ResetPasswordPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="input bg-white text-slate-900 placeholder-slate-400"
+                  className="input bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm"
                 />
                 {confirmPassword && newPassword !== confirmPassword && (
                   <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
@@ -168,12 +168,12 @@ export default function ResetPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-primary w-full btn-lg font-bold shadow-md mt-2"
+                className="btn btn-primary w-full btn-lg font-bold shadow-md mt-2 text-xs sm:text-sm py-2.5"
               >
                 {loading ? 'Updating...' : 'Update Password →'}
               </button>
 
-              <Link to="/login" className="block text-center text-sm text-slate-400 hover:text-slate-600 mt-3 font-medium">
+              <Link to="/login" className="block text-center text-xs sm:text-sm text-slate-400 hover:text-slate-600 mt-3 font-medium">
                 ← Back to Sign In
               </Link>
             </form>

@@ -103,10 +103,11 @@ export default function LoginPage() {
           const btnContainer = document.getElementById('google-signin-btn');
           if (btnContainer) {
             btnContainer.innerHTML = '';
+            const containerWidth = Math.min(360, Math.max(240, window.innerWidth - 64));
             window.google.accounts.id.renderButton(btnContainer, {
               theme: 'outline',
               size: 'large',
-              width: 360,
+              width: containerWidth,
               text: 'signin_with',
               shape: 'rectangular',
               logo_alignment: 'left',
@@ -118,21 +119,6 @@ export default function LoginPage() {
       }
     });
   }, [GOOGLE_CLIENT_ID, handleGoogleResponse]);
-
-  const handleCustomGoogleClick = async () => {
-    setGoogleLoading(true);
-    try {
-      const payload = { idToken: 'demo_google_token', email: 'krishnapex1@gmail.com', name: 'Ketan Rawat' };
-      const { data } = await axiosClient.post('/auth/google', payload);
-      await login(data.data.accessToken, data.data.user);
-      toast.success(`Welcome, ${data.data.user.name.split(' ')[0]}! 🎉`);
-      navigate('/home', { replace: true });
-    } catch (err) {
-      toast.error('Google Sign-In failed');
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
   /* ── Handlers ── */
   const handleSubmit = async (e) => {
@@ -181,31 +167,31 @@ export default function LoginPage() {
   /* ── Forgot Password View ── */
   if (showForgot) {
     return (
-      <div className="w-full max-w-md animate-slide-up">
-        <div className="text-center mb-8">
+      <div className="w-full max-w-md animate-slide-up px-3 sm:px-0">
+        <div className="text-center mb-6 sm:mb-8">
           <img src="/images/campusbite_logo.png" alt="CampusBite"
-            className="w-16 h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md" />
-          <h1 className="text-2xl font-display font-bold text-slate-900">Reset Password</h1>
-          <p className="text-slate-500 text-sm mt-1">Enter your email and choose a strong new password</p>
+            className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md" />
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900">Reset Password</h1>
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">Enter your email and choose a strong new password</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl">
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl">
           {forgotDone ? (
-            <div className="text-center space-y-5">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl mx-auto">✅</div>
+            <div className="text-center space-y-4 sm:space-y-5">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-100 flex items-center justify-center text-2xl sm:text-3xl mx-auto">✅</div>
               <div>
-                <p className="font-bold text-slate-800 text-lg">Password Updated!</p>
-                <p className="text-slate-500 text-sm mt-1">Sign in with your new password now.</p>
+                <p className="font-bold text-slate-800 text-base sm:text-lg">Password Updated!</p>
+                <p className="text-slate-500 text-xs sm:text-sm mt-1">Sign in with your new password now.</p>
               </div>
               <button onClick={() => { setShowForgot(false); setForgotDone(false); setForgot({ email: '', newPassword: '', confirm: '' }); }}
-                className="btn btn-primary w-full font-bold">Sign In →</button>
+                className="btn btn-primary w-full font-bold text-xs sm:text-sm py-2.5">Sign In →</button>
             </div>
           ) : (
-            <form onSubmit={handleForgot} className="space-y-5">
+            <form onSubmit={handleForgot} className="space-y-4 sm:space-y-5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Your Registered Email *</label>
                 <input type="email" required value={forgot.email} onChange={e => setForgot(f => ({ ...f, email: e.target.value }))}
-                  placeholder="rahul@nitjsr.ac.in" className="input bg-white text-slate-900" />
+                  placeholder="rahul@nitjsr.ac.in" className="input bg-white text-slate-900 text-xs sm:text-sm" />
               </div>
 
               <div>
@@ -214,9 +200,9 @@ export default function LoginPage() {
                   <input type={showNewPwd ? 'text' : 'password'} required value={forgot.newPassword}
                     onChange={e => setForgot(f => ({ ...f, newPassword: e.target.value }))}
                     placeholder="Min 8 chars, upper, lower, number, symbol"
-                    className="input bg-white text-slate-900 pr-12" />
+                    className="input bg-white text-slate-900 pr-12 text-xs sm:text-sm" />
                   <button type="button" onClick={() => setShowNewPwd(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-sm font-bold">
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold">
                     {showNewPwd ? 'Hide' : 'Show'}
                   </button>
                 </div>
@@ -239,7 +225,7 @@ export default function LoginPage() {
                         ['Number (0-9)', strength.checks.number],
                         ['Special char (!@#…)', strength.checks.special],
                       ].map(([label, ok]) => (
-                        <div key={label} className="flex items-center gap-1.5 text-xs" style={{ color: ok ? '#22c55e' : '#94a3b8' }}>
+                        <div key={label} className="flex items-center gap-1.5 text-[11px]" style={{ color: ok ? '#22c55e' : '#94a3b8' }}>
                           <span>{ok ? '✓' : '○'}</span><span>{label}</span>
                         </div>
                       ))}
@@ -252,17 +238,17 @@ export default function LoginPage() {
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Confirm New Password *</label>
                 <input type="password" required value={forgot.confirm}
                   onChange={e => setForgot(f => ({ ...f, confirm: e.target.value }))}
-                  placeholder="••••••••" className="input bg-white text-slate-900" />
+                  placeholder="••••••••" className="input bg-white text-slate-900 text-xs sm:text-sm" />
                 {forgot.confirm && forgot.newPassword !== forgot.confirm && (
                   <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
                 )}
               </div>
 
-              <button type="submit" disabled={forgotLoading} className="btn btn-primary w-full btn-lg font-bold shadow-md">
+              <button type="submit" disabled={forgotLoading} className="btn btn-primary w-full btn-lg font-bold shadow-md text-xs sm:text-sm py-2.5">
                 {forgotLoading ? 'Updating…' : 'Update Password →'}
               </button>
               <button type="button" onClick={() => setShowForgot(false)}
-                className="w-full text-center text-sm text-slate-400 hover:text-slate-600 font-medium">
+                className="w-full text-center text-xs sm:text-sm text-slate-400 hover:text-slate-600 font-medium pt-1">
                 ← Back to Sign In
               </button>
             </form>
@@ -274,35 +260,35 @@ export default function LoginPage() {
 
   /* ── Main Login View ── */
   return (
-    <div className="w-full max-w-md animate-slide-up">
-      <div className="text-center mb-8">
+    <div className="w-full max-w-md animate-slide-up px-3 sm:px-0">
+      <div className="text-center mb-6 sm:mb-8">
         <img src="/images/campusbite_logo.png" alt="CampusBite"
-          className="w-16 h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md" />
-        <h1 className="text-2xl font-display font-bold text-slate-900">Welcome back</h1>
-        <p className="text-slate-500 text-sm mt-1">Sign in to your CampusBite account • NITJSR</p>
+          className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md" />
+        <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900">Welcome back</h1>
+        <p className="text-slate-500 text-xs sm:text-sm mt-1">Sign in to your CampusBite account • NITJSR</p>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-5">
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-4 sm:space-y-5">
         {/* Google OAuth Sign-In */}
         <div>
-          <div id="google-signin-btn" className="w-full flex justify-center min-h-[44px]" />
+          <div id="google-signin-btn" className="w-full flex justify-center min-h-[44px] overflow-hidden" />
           {googleLoading && <p className="text-center text-xs text-slate-400 mt-2 font-medium">Signing in with Google…</p>}
-          <div className="flex items-center gap-3 my-5">
+          <div className="flex items-center gap-3 my-4 sm:my-5">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs font-bold text-slate-400 uppercase">or sign in with email</span>
+            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase">or sign in with email</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl p-3 font-medium">
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl p-3 font-medium">
             ⚠️ {error}
           </div>
         )}
 
         {/* Email + Password form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1" htmlFor="email">
               College Email
@@ -310,7 +296,7 @@ export default function LoginPage() {
             <input id="email" type="email" autoComplete="email" required
               value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
               placeholder="rahul@nitjsr.ac.in"
-              className="input bg-white text-slate-900 placeholder-slate-400" />
+              className="input bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm" />
           </div>
 
           <div>
@@ -324,7 +310,7 @@ export default function LoginPage() {
             <div className="relative">
               <input id="password" type={showPwd ? 'text' : 'password'} autoComplete="current-password" required
                 value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••" className="input bg-white text-slate-900 placeholder-slate-400 pr-12" />
+                placeholder="••••••••" className="input bg-white text-slate-900 placeholder-slate-400 pr-12 text-xs sm:text-sm" />
               <button type="button" onClick={() => setShowPwd(v => !v)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold">
                 {showPwd ? 'Hide' : 'Show'}
@@ -333,23 +319,23 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" disabled={loading}
-            className="btn btn-primary w-full btn-lg mt-2 font-bold shadow-md">
+            className="btn btn-primary w-full btn-lg mt-2 font-bold shadow-md text-xs sm:text-sm py-2.5">
             {loading ? 'Signing in…' : 'Sign in to CampusBite →'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 font-medium pt-1">
+        <p className="text-center text-xs sm:text-sm text-slate-500 font-medium pt-1">
           New to CampusBite?{' '}
           <Link to="/register" className="text-orange-600 hover:text-orange-700 font-bold">Create account</Link>
         </p>
 
         {/* Canteen Staff & Admin Quick Links */}
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2">
           <a
             href={CANTEEN_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+            className="w-full sm:flex-1 text-center py-2 px-2.5 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
           >
             <span>👨‍🍳 Canteen Staff Portal</span>
           </a>
@@ -357,7 +343,7 @@ export default function LoginPage() {
             href={ADMIN_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 text-center py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+            className="w-full sm:flex-1 text-center py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
           >
             <span>🛡️ Admin Console</span>
           </a>
@@ -365,19 +351,19 @@ export default function LoginPage() {
       </div>
 
       {/* Website Footer */}
-      <footer className="w-full max-w-lg mt-8 pt-4 text-center space-y-2">
+      <footer className="w-full max-w-lg mt-6 sm:mt-8 pt-2 sm:pt-4 text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <a
             href="/sitemap.csv"
             download="sitemap.csv"
             target="_blank"
             rel="noreferrer"
-            className="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline inline-flex items-center gap-1 transition-colors"
+            className="text-[11px] sm:text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline inline-flex items-center gap-1 transition-colors"
           >
             <span>📄 View Project Sitemap (.csv)</span>
           </a>
         </div>
-        <p className="text-xs text-slate-400">
+        <p className="text-[11px] sm:text-xs text-slate-400">
           © 2026 CampusBite — National Institute of Technology Jamshedpur. All rights reserved.
         </p>
       </footer>

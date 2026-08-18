@@ -42,7 +42,9 @@ export default function ReportIssuePage() {
 
   useEffect(() => {
     fetchOrderAndIssues();
-    const interval = setInterval(fetchOrderAndIssues, 3000); // 3s live poll for staff replies
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchOrderAndIssues();
+    }, 10000);
     return () => clearInterval(interval);
   }, [orderId]);
 
@@ -71,23 +73,23 @@ export default function ReportIssuePage() {
 
   if (loadingOrder) {
     return (
-      <div className="page-container max-w-2xl">
-        <div className="card h-48 skeleton" />
+      <div className="page-container max-w-2xl py-6 px-3 sm:px-6">
+        <div className="card h-48 skeleton bg-slate-100 animate-pulse rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="page-container max-w-2xl space-y-6 animate-fade-in">
+    <div className="page-container max-w-2xl py-4 sm:py-8 space-y-4 sm:space-y-6 animate-fade-in px-3 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-        <Link to="/orders" className="text-gray-400 hover:text-gray-700 transition-colors">
+      <div className="flex items-center gap-3 border-b border-slate-200 pb-3 sm:pb-4">
+        <Link to="/orders" className="text-slate-400 hover:text-slate-700 transition-colors text-lg font-bold">
           ←
         </Link>
         <div>
-          <h1 className="text-xl font-display font-bold text-gray-900">Report an Issue</h1>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-slate-900">Report an Issue</h1>
           {order && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Order #{order.orderNumber} • {order.canteenId?.name || 'Canteen'}
             </p>
           )}
@@ -95,18 +97,18 @@ export default function ReportIssuePage() {
       </div>
 
       {/* New Issue Form */}
-      <div className="card p-6">
-        <h2 className="font-bold text-gray-900 mb-4">Describe Your Problem</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="card p-4 sm:p-6 rounded-2xl sm:rounded-3xl">
+        <h2 className="font-bold text-slate-900 mb-3 sm:mb-4 text-sm sm:text-base">Describe Your Problem</h2>
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-2">Issue Type *</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Issue Type *</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ISSUE_TYPES.map((type) => (
                 <button
                   key={type.value}
                   type="button"
                   onClick={() => setIssueType(type.value)}
-                  className="text-left p-3 rounded-xl border text-sm font-medium transition-all"
+                  className="text-left p-2.5 sm:p-3 rounded-xl border text-xs sm:text-sm font-medium transition-all"
                   style={{
                     backgroundColor: issueType === type.value ? '#fff7ed' : '#f8fafc',
                     borderColor: issueType === type.value ? '#f97316' : '#e2e8f0',
@@ -121,7 +123,7 @@ export default function ReportIssuePage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1" htmlFor="issue-message">
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1" htmlFor="issue-message">
               Describe the Issue *
             </label>
             <textarea
@@ -130,7 +132,7 @@ export default function ReportIssuePage() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Please describe the problem in detail so the canteen staff can help you effectively..."
-              className="input resize-none"
+              className="input resize-none text-xs sm:text-sm"
               required
             />
           </div>
@@ -138,7 +140,7 @@ export default function ReportIssuePage() {
           <button
             type="submit"
             disabled={submitting}
-            className="btn btn-primary w-full font-bold"
+            className="btn btn-primary w-full font-bold text-xs sm:text-sm py-2.5"
           >
             {submitting ? 'Submitting...' : '📩 Submit Issue Report'}
           </button>
@@ -148,28 +150,28 @@ export default function ReportIssuePage() {
       {/* Existing Issues & Staff Replies */}
       {issues.length > 0 && (
         <div className="space-y-3">
-          <h2 className="font-bold text-gray-900">Previous Reports for This Order</h2>
+          <h2 className="font-bold text-slate-900 text-sm sm:text-base">Previous Reports for This Order</h2>
           {issues.map((issue) => (
-            <div key={issue._id} className="card p-4 space-y-3">
+            <div key={issue._id} className="card p-4 space-y-3 rounded-2xl">
               {/* Student message */}
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700 flex-shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs sm:text-sm font-bold text-blue-700 flex-shrink-0">
                   You
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-gray-900">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900">
                       {ISSUE_TYPES.find(t => t.value === issue.issueType)?.label || issue.issueType}
                     </span>
-                    <span className={`badge text-xs px-2 py-0.5 rounded-full font-bold ${
+                    <span className={`badge text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-bold ${
                       issue.status === 'RESOLVED' ? 'badge-green' :
                       issue.status === 'IN_PROGRESS' ? 'badge-orange' : 'badge-blue'
                     }`}>
                       {issue.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-xl p-3">{issue.studentMessage}</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-700 bg-slate-50 rounded-xl p-3">{issue.studentMessage}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-1">
                     {new Date(issue.createdAt).toLocaleString('en-IN', {
                       day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                     })}
@@ -179,14 +181,14 @@ export default function ReportIssuePage() {
 
               {/* Staff reply */}
               {issue.staffReply && (
-                <div className="flex items-start gap-3 pl-4 border-l-2 border-orange-200">
-                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-700 flex-shrink-0">
+                <div className="flex items-start gap-3 pl-3 sm:pl-4 border-l-2 border-orange-200">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs sm:text-sm font-bold text-orange-700 flex-shrink-0">
                     Staff
                   </div>
-                  <div className="flex-1">
-                    <div className="text-xs font-bold text-gray-900 mb-1">Canteen Staff Response</div>
-                    <p className="text-sm text-gray-700 bg-orange-50 border border-orange-100 rounded-xl p-3">{issue.staffReply}</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] sm:text-xs font-bold text-slate-900 mb-1">Canteen Staff Response</div>
+                    <p className="text-xs sm:text-sm text-slate-700 bg-orange-50 border border-orange-100 rounded-xl p-3">{issue.staffReply}</p>
+                    <p className="text-[10px] sm:text-xs text-slate-400 mt-1">
                       {new Date(issue.repliedAt).toLocaleString('en-IN', {
                         day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                       })}
@@ -196,7 +198,7 @@ export default function ReportIssuePage() {
               )}
 
               {!issue.staffReply && (
-                <p className="text-xs text-gray-400 pl-11 italic">⏳ Awaiting canteen staff response...</p>
+                <p className="text-[11px] sm:text-xs text-slate-400 pl-10 italic">⏳ Awaiting canteen staff response...</p>
               )}
             </div>
           ))}

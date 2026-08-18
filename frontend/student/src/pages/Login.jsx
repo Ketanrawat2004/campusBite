@@ -91,6 +91,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
+    let resizeTimer;
     loadGoogleScript(GOOGLE_CLIENT_ID, () => {
       if (window.google?.accounts?.id) {
         try {
@@ -100,19 +101,31 @@ export default function LoginPage() {
             auto_select: false,
           });
 
-          const btnContainer = document.getElementById('google-signin-btn');
-          if (btnContainer) {
-            btnContainer.innerHTML = '';
-            const containerWidth = Math.min(360, Math.max(240, window.innerWidth - 64));
-            window.google.accounts.id.renderButton(btnContainer, {
-              theme: 'outline',
-              size: 'large',
-              width: containerWidth,
-              text: 'signin_with',
-              shape: 'rectangular',
-              logo_alignment: 'left',
-            });
-          }
+          const renderGoogleButton = () => {
+            const btnContainer = document.getElementById('google-signin-btn');
+            if (btnContainer) {
+              btnContainer.innerHTML = '';
+              const availableWidth = btnContainer.clientWidth || btnContainer.parentElement?.clientWidth || 280;
+              const targetWidth = Math.max(220, Math.min(360, availableWidth));
+              window.google.accounts.id.renderButton(btnContainer, {
+                theme: 'outline',
+                size: 'large',
+                width: targetWidth,
+                text: 'signin_with',
+                shape: 'rectangular',
+                logo_alignment: 'left',
+              });
+            }
+          };
+
+          renderGoogleButton();
+
+          const handleResize = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(renderGoogleButton, 150);
+          };
+          window.addEventListener('resize', handleResize);
+          return () => window.removeEventListener('resize', handleResize);
         } catch (err) {
           console.error('Google accounts.id initialize error:', err);
         }
@@ -271,7 +284,7 @@ export default function LoginPage() {
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-4 sm:space-y-5">
         {/* Google OAuth Sign-In */}
         <div>
-          <div id="google-signin-btn" className="w-full flex justify-center min-h-[44px] overflow-hidden" />
+          <div id="google-signin-btn" className="w-full flex justify-center min-h-[44px] overflow-visible" />
           {googleLoading && <p className="text-center text-xs text-slate-400 mt-2 font-medium">Signing in with Google…</p>}
           <div className="flex items-center gap-3 my-4 sm:my-5">
             <div className="h-px flex-1 bg-slate-100" />

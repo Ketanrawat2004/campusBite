@@ -88,7 +88,7 @@ export default function AdminApp() {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex" style={{ alignItems: 'center', gap: '4px' }}>
+            <nav className="desktop-nav-only" style={{ alignItems: 'center', gap: '4px' }}>
               <NavLink to="/dashboard">📊 Dashboard</NavLink>
               <NavLink to="/live-orders">⚡ Live Orders</NavLink>
               <NavLink to="/canteens">🏪 Canteens</NavLink>
@@ -108,7 +108,7 @@ export default function AdminApp() {
             </nav>
 
             {/* Mobile Hamburger Button */}
-            <div className="flex lg:hidden" style={{ alignItems: 'center', gap: '8px' }}>
+            <div className="mobile-nav-only" style={{ alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -122,7 +122,7 @@ export default function AdminApp() {
 
           {/* Mobile Drawer Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+            <div className="mobile-nav-only" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', flexDirection: 'column', gap: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               <div style={{ paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#0f172a' }}>{user.name}</div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</div>
@@ -178,7 +178,7 @@ export default function AdminApp() {
           </main>
 
           {/* Mobile Bottom Docked Navigation */}
-          <nav className="flex lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 4px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
+          <nav className="mobile-nav-only" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 4px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
             {[
               { label: 'Dash', path: '/dashboard', icon: '📊' },
               { label: 'Live', path: '/live-orders', icon: '⚡' },
@@ -506,10 +506,10 @@ function AdminLiveOrdersPage({ token }) {
       </div>
 
       {/* Orders Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {filteredOrders.map((o) => (
           <div key={o._id} style={{ ...S.card, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>#{o.orderNumber}</h3>
                 <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
@@ -533,7 +533,7 @@ function AdminLiveOrdersPage({ token }) {
               ))}
             </div>
 
-            <div style={{ display: 'flex', justifyBetween: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Total Amount:</span>
               <span style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a' }}>{formatRupees(o.pricingBreakdown?.totalInPaise || 0)}</span>
             </div>
@@ -567,6 +567,7 @@ function AdminCanteensPage({ token }) {
   const [canteens, setCanteens] = useState([]);
 
   const fetchCanteens = async () => {
+    if (document.hidden) return;
     try {
       const { data } = await axios.get(`${API_BASE}/canteens`);
       setCanteens(data.data || []);
@@ -577,7 +578,7 @@ function AdminCanteensPage({ token }) {
 
   useEffect(() => {
     fetchCanteens();
-    const interval = setInterval(fetchCanteens, 2000);
+    const interval = setInterval(fetchCanteens, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -599,10 +600,10 @@ function AdminCanteensPage({ token }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>Campus Canteens & Kitchen Controls</h2>
-        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Real-time open/closed controls & canteen overview across NIT Jamshedpur (Auto 2s Sync)</p>
+        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Real-time open/closed controls & canteen overview across NIT Jamshedpur</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {canteens.map((c) => {
           const isOpen = c.acceptingOrders !== false;
           const locName = typeof c.location === 'object' ? c.location?.name : c.location;
@@ -714,6 +715,7 @@ function AdminIssuesPage({ token }) {
   const [complaints, setComplaints] = useState([]);
 
   const fetchIssues = async () => {
+    if (document.hidden) return;
     try {
       const { data } = await axios.get(`${API_BASE}/admin/complaints`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -726,7 +728,7 @@ function AdminIssuesPage({ token }) {
 
   useEffect(() => {
     fetchIssues();
-    const interval = setInterval(fetchIssues, 3000);
+    const interval = setInterval(fetchIssues, 5000);
     return () => clearInterval(interval);
   }, [token]);
 
@@ -750,7 +752,7 @@ function AdminIssuesPage({ token }) {
         <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>Reported order complaints & real-time resolution desk</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
         {complaints.length === 0 ? (
           <div style={{ ...S.card, textAlign: 'center', color: '#64748b', padding: '40px' }}>
             🎉 No open complaints reported!
@@ -758,7 +760,7 @@ function AdminIssuesPage({ token }) {
         ) : (
           complaints.map((c) => (
             <div key={c._id} style={S.card}>
-              <div style={{ display: 'flex', justifyBetween: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Issue #{c._id?.slice(-6)}</h4>
                 <span style={{ backgroundColor: c.status === 'RESOLVED' ? '#ecfdf5' : '#fff1f2', color: c.status === 'RESOLVED' ? '#16a34a' : '#e11d48', fontWeight: '800', padding: '3px 8px', borderRadius: '6px', fontSize: '11px' }}>
                   {c.status}

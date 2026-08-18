@@ -115,7 +115,7 @@ export default function CanteenApp() {
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex" style={{ alignItems: 'center', gap: '12px' }}>
+            <div className="desktop-nav-only" style={{ alignItems: 'center', gap: '12px' }}>
               <button
                 onClick={toggleSound}
                 title="Toggle audio notification chime for incoming orders"
@@ -205,7 +205,7 @@ export default function CanteenApp() {
             </div>
 
             {/* Mobile Controls Right */}
-            <div className="flex lg:hidden" style={{ alignItems: 'center', gap: '8px' }}>
+            <div className="mobile-nav-only" style={{ alignItems: 'center', gap: '8px' }}>
               <button
                 onClick={toggleSound}
                 title="Toggle Sound"
@@ -225,7 +225,7 @@ export default function CanteenApp() {
 
           {/* Mobile Drawer Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+            <div className="mobile-nav-only" style={{ backgroundColor: '#ffffff', borderBottom: '2px solid #ea580c', padding: '16px', flexDirection: 'column', gap: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
               <div style={{ paddingBottom: '8px', borderBottom: '1px solid #f1f5f9' }}>
                 <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#0f172a' }}>{user.name}</div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</div>
@@ -293,7 +293,7 @@ export default function CanteenApp() {
           </main>
 
           {/* Mobile Bottom Docked Navigation */}
-          <nav className="flex lg:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 8px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
+          <nav className="mobile-nav-only" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', padding: '6px 8px', justifyContent: 'space-around', boxShadow: '0 -2px 10px rgba(0,0,0,0.05)' }}>
             {[
               { label: 'Queue', path: '/queue', icon: '📋' },
               { label: 'Menu', path: '/menu', icon: '🍔' },
@@ -1232,7 +1232,7 @@ function MenuMgmtPage({ token, user }) {
       {/* Add Category Modal */}
       {showAddCategoryModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '28px', maxWidth: '400px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '24px', maxWidth: '400px', width: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>Add Menu Category</h3>
               <button onClick={() => setShowAddCategoryModal(false)} style={{ backgroundColor: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#64748b' }}>✕</button>
@@ -1260,7 +1260,7 @@ function MenuMgmtPage({ token, user }) {
       {/* Add Item Modal */}
       {showAddModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '28px', maxWidth: '480px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: '24px', maxWidth: '480px', width: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', boxSizing: 'border-box' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#0f172a' }}>Add New Menu Item</h3>
               <button onClick={() => setShowAddModal(false)} style={{ backgroundColor: 'transparent', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#64748b' }}>✕</button>
@@ -1338,7 +1338,7 @@ function MenuMgmtPage({ token, user }) {
                 <label htmlFor="vegCheck" style={{ fontSize: '13px', fontWeight: 'bold', color: '#0f172a', cursor: 'pointer' }}>Vegetarian (Green Dot)</label>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
@@ -1375,7 +1375,7 @@ function MenuMgmtPage({ token, user }) {
                   <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 'bold', color: '#ea580c' }}>{cat.name}</h3>
                   <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>{filteredItems.length} Items</span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
                   {filteredItems.map((item) => (
                     <div key={item._id} style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', padding: '14px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                       <div>
@@ -1423,6 +1423,7 @@ function IssuesPage({ token }) {
   const [issueFilter, setIssueFilter] = useState('ALL');
 
   const fetchIssues = async () => {
+    if (document.hidden) return;
     try {
       const { data } = await axios.get(`${API_BASE}/issues/canteen`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -1437,7 +1438,7 @@ function IssuesPage({ token }) {
 
   useEffect(() => {
     fetchIssues();
-    const interval = setInterval(fetchIssues, 3000); // 3s real-time issue refresh
+    const interval = setInterval(fetchIssues, 5000); // 5s real-time issue refresh
     return () => clearInterval(interval);
   }, [token]);
 

@@ -39,17 +39,14 @@ export default function CanteenApp() {
       return null;
     }
   });
-  const [loading, setLoading] = useState(!user && !!token);
+  const [loading, setLoading] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     return localStorage.getItem('canteen_sound_enabled') !== 'false';
   });
   const location = useLocation();
 
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
     axios
       .get(`${API_BASE}/profile`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => {
@@ -65,8 +62,7 @@ export default function CanteenApp() {
           setToken(null);
           setUser(null);
         }
-      })
-      .finally(() => setLoading(false));
+      });
   }, [token]);
 
   const toggleSound = () => {
@@ -90,16 +86,6 @@ export default function CanteenApp() {
     setToken(null);
     setUser(null);
   };
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif', gap: '12px' }}>
-        <div style={{ width: '32px', height: '32px', border: '3px solid #ea580c', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ fontWeight: 'bold', color: '#475569', margin: 0 }}>Connecting to Canteen Operations Portal...</p>
-      </div>
-    );
-  }
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 

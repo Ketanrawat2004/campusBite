@@ -20,32 +20,50 @@ const S = {
 };
 
 export default function AdminApp() {
-  const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('admin_token'));
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('admin_user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) { setLoading(false); return; }
+    if (!token) return;
     axios
       .get(`${API_BASE}/profile`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setUser(res.data.data))
-      .catch(() => { localStorage.removeItem('admin_token'); setToken(null); })
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (res.data?.data) {
+          setUser(res.data.data);
+          localStorage.setItem('admin_user', JSON.stringify(res.data.data));
+        }
+      })
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_user');
+          setToken(null);
+          setUser(null);
+        }
+      });
   }, [token]);
 
-  const login = (tok, userData) => { localStorage.setItem('admin_token', tok); setToken(tok); setUser(userData); };
-  const logout = () => { localStorage.removeItem('admin_token'); setToken(null); setUser(null); };
+  const login = (tok, userData) => {
+    localStorage.setItem('admin_token', tok);
+    localStorage.setItem('admin_user', JSON.stringify(userData));
+    setToken(tok);
+    setUser(userData);
+  };
 
-  if (loading) {
-    return (
-      <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px' }} />
-          <p style={{ color: '#64748b', fontWeight: '600' }}>Loading Real-Time Admin Console...</p>
-        </div>
-      </div>
-    );
-  }
+  const logout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_user');
+    setToken(null);
+    setUser(null);
+  };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();

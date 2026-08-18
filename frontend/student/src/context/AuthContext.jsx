@@ -4,30 +4,39 @@ import axiosClient from '../api/client';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const token = localStorage.getItem('accessToken');
     if (!token) {
       setUser(null);
-      setLoading(false);
       return;
     }
 
+    // Silently revalidate profile in background without blocking initial UI render
     axiosClient
       .get('/profile')
       .then((res) => {
-        if (isMounted) setUser(res.data.data);
+        if (isMounted && res.data?.data) {
+          setUser(res.data.data);
+          localStorage.setItem('user', JSON.stringify(res.data.data));
+        }
       })
       .catch((err) => {
-        console.error('Profile fetch error:', err);
-        localStorage.removeItem('accessToken');
-        if (isMounted) setUser(null);
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
+        if (err.response?.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          if (isMounted) setUser(null);
+        }
       });
 
     return () => {
@@ -38,6 +47,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (accessToken, userData) => {
     localStorage.setItem('accessToken', accessToken);
     if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
     }
     setLoading(false);
@@ -48,6 +58,7 @@ export function AuthProvider({ children }) {
       await axiosClient.post('/auth/logout');
     } catch { /* ignore */ }
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
     setLoading(false);
   }, []);

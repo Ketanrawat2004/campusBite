@@ -337,24 +337,48 @@ function CanteenLoginPage({ onLogin }) {
   const [email, setEmail] = useState('main.canteen@nitjsr.ac.in');
   const [password, setPassword] = useState('Staff@123');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('Authenticating...');
 
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-utbl0j3a1kh2aprj335g9ru1god9ospj.apps.googleusercontent.com';
+
+  const isAnyLoading = loading || googleLoading;
+
+  useEffect(() => {
+    if (!isAnyLoading) {
+      setLoadingMsg('Authenticating...');
+      return;
+    }
+    const t1 = setTimeout(() => setLoadingMsg('Connecting to campus servers... Please wait'), 2500);
+    const t2 = setTimeout(() => setLoadingMsg('Loading Canteen Kitchen Operations... Almost ready! 🍳'), 6000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isAnyLoading]);
 
   const handleGoogleResponse = async (response) => {
-    if (!response || !response.credential) return;
+    if (!response || !response.credential) {
+      toast.error('Google credential not received. Please try again.');
+      return;
+    }
+    setGoogleLoading(true);
     try {
       const { data } = await axios.post(`${API_BASE}/auth/google`, {
         idToken: response.credential,
         role: 'CANTEEN_STAFF',
       });
-      if (data.data.user.role !== 'CANTEEN_STAFF' && data.data.user.role !== 'ADMIN') {
+      if (data.data?.user?.role !== 'CANTEEN_STAFF' && data.data?.user?.role !== 'ADMIN') {
         toast.error('Access restricted to Canteen Staff & Admin');
         return;
       }
       onLogin(data.data.accessToken, data.data.user);
       toast.success(`Welcome, ${data.data.user.name.split(' ')[0]}! Logged into Canteen Staff Portal 🎉`);
     } catch (err) {
-      toast.error(err.response?.data?.error?.message || 'Google sign-in failed');
+      console.error('Canteen Google Auth Error:', err);
+      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use staff email & password.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -395,7 +419,7 @@ function CanteenLoginPage({ onLogin }) {
         }
       }
     }
-  }, []);
+  }, [GOOGLE_CLIENT_ID]);
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -425,8 +449,19 @@ function CanteenLoginPage({ onLogin }) {
           <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>NIT Jamshedpur • Kitchen Operations & Menu Control</p>
         </div>
 
+        {/* Progressive Loading Banner */}
+        {isAnyLoading && (
+          <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '16px', padding: '14px', marginBottom: '20px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}>
+              <div style={{ width: '14px', height: '14px', border: '2px solid #ea580c', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#9a3412' }}>{loadingMsg}</span>
+            </div>
+            <p style={{ fontSize: '11px', color: '#c2410c', margin: 0 }}>Please wait without closing this page...</p>
+          </div>
+        )}
+
         {/* Google OAuth Button */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px', opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
           <div id="canteen-google-btn" style={{ display: 'flex', justifyContent: 'center', minHeight: '44px' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
             <div style={{ height: '1px', flex: 1, backgroundColor: '#e2e8f0' }} />
@@ -440,6 +475,7 @@ function CanteenLoginPage({ onLogin }) {
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
             <input
               type="email"
+              disabled={isAnyLoading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '12px', color: '#0f172a', fontSize: '14px', boxSizing: 'border-box' }}
@@ -449,6 +485,7 @@ function CanteenLoginPage({ onLogin }) {
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Password</label>
             <input
               type="password"
+              disabled={isAnyLoading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '12px', color: '#0f172a', fontSize: '14px', boxSizing: 'border-box' }}
@@ -456,16 +493,17 @@ function CanteenLoginPage({ onLogin }) {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={isAnyLoading}
             style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: 'bold', padding: '14px', border: 'none', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', marginTop: '8px', boxShadow: '0 4px 12px rgba(234,88,12,0.2)' }}
           >
-            {loading ? 'Authenticating...' : 'Access Canteen Dashboard →'}
+            {isAnyLoading ? 'Authenticating... Please wait' : 'Access Canteen Dashboard →'}
           </button>
         </form>
 
         <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', textAlign: 'center' }}>
           <button
             type="button"
+            disabled={isAnyLoading}
             onClick={() => {
               setEmail('main.canteen@nitjsr.ac.in');
               setPassword('Staff@123');

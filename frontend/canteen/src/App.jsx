@@ -338,7 +338,7 @@ function CanteenLoginPage({ onLogin }) {
   const [password, setPassword] = useState('Staff@123');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState('Authenticating...');
+  const [loadingMsg, setLoadingMsg] = useState('Signing in...');
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-utbl0j3a1kh2aprj335g9ru1god9ospj.apps.googleusercontent.com';
 
@@ -346,7 +346,7 @@ function CanteenLoginPage({ onLogin }) {
 
   useEffect(() => {
     if (!isAnyLoading) {
-      setLoadingMsg('Authenticating...');
+      setLoadingMsg('Signing in...');
       return;
     }
     const t1 = setTimeout(() => setLoadingMsg('Connecting to campus servers... Please wait'), 2500);
@@ -376,7 +376,7 @@ function CanteenLoginPage({ onLogin }) {
       toast.success(`Welcome, ${data.data.user.name.split(' ')[0]}! Logged into Canteen Staff Portal 🎉`);
     } catch (err) {
       console.error('Canteen Google Auth Error:', err);
-      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use staff email & password.');
+      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use staff email & password below.');
     } finally {
       setGoogleLoading(false);
     }
@@ -405,7 +405,7 @@ function CanteenLoginPage({ onLogin }) {
           const container = document.getElementById('canteen-google-btn');
           if (container) {
             container.innerHTML = '';
-            const btnWidth = Math.min(356, Math.max(240, window.innerWidth - 64));
+            const btnWidth = Math.min(360, Math.max(240, window.innerWidth - 64));
             window.google.accounts.id.renderButton(container, {
               theme: 'outline',
               size: 'large',
@@ -440,78 +440,92 @@ function CanteenLoginPage({ onLogin }) {
     }
   };
 
+  const handleQuickDemo = (e) => {
+    if (e) e.preventDefault();
+    setEmail('main.canteen@nitjsr.ac.in');
+    setPassword('Staff@123');
+    setLoading(true);
+    axios.post(`${API_BASE}/auth/login`, { email: 'main.canteen@nitjsr.ac.in', password: 'Staff@123' })
+      .then(res => {
+        onLogin(res.data.data.accessToken, res.data.data.user);
+        toast.success('Logged into Main Canteen Dashboard! 🎉');
+      })
+      .catch(err => {
+        toast.error(err.response?.data?.error?.message || 'Demo sign-in failed');
+      })
+      .finally(() => setLoading(false));
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', backgroundColor: '#f8fafc' }}>
-      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '20px' : '36px', maxWidth: '440px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '24px 20px' : '36px', maxWidth: '420px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06)' }}>
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '64px', height: '64px', objectFit: 'contain', margin: '0 auto 12px auto' }} />
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: '#0f172a' }}>Canteen Staff Portal</h1>
+          <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px auto', borderRadius: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.06)' }} />
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Canteen Staff Portal</h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>NIT Jamshedpur • Kitchen Operations & Menu Control</p>
         </div>
 
-        {/* Progressive Loading Banner */}
+        {/* Clean Loading State */}
         {isAnyLoading && (
-          <div style={{ backgroundColor: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '16px', padding: '14px', marginBottom: '20px', textAlign: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}>
-              <div style={{ width: '14px', height: '14px', border: '2px solid #ea580c', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#9a3412' }}>{loadingMsg}</span>
-            </div>
-            <p style={{ fontSize: '11px', color: '#c2410c', margin: 0 }}>Please wait without closing this page...</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 14px', borderRadius: '12px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', color: '#9a3412', fontSize: '12px', fontWeight: '600', marginBottom: '16px' }}>
+            <div style={{ width: '14px', height: '14px', border: '2px solid #ea580c', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loadingMsg}</span>
           </div>
         )}
 
         {/* Google OAuth Button */}
-        <div style={{ marginBottom: '20px', opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
+        <div style={{ marginBottom: '18px', opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
           <div id="canteen-google-btn" style={{ display: 'flex', justifyContent: 'center', minHeight: '44px' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
-            <div style={{ height: '1px', flex: 1, backgroundColor: '#e2e8f0' }} />
-            <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', textTransform: 'uppercase' }}>or sign in with password</span>
-            <div style={{ height: '1px', flex: 1, backgroundColor: '#e2e8f0' }} />
+            <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
+            <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>or sign in with password</span>
+            <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
             <input
               type="email"
               disabled={isAnyLoading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '12px', color: '#0f172a', fontSize: '14px', boxSizing: 'border-box' }}
+              placeholder="main.canteen@nitjsr.ac.in"
+              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Password</label>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Password</label>
             <input
               type="password"
               disabled={isAnyLoading}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '12px', color: '#0f172a', fontSize: '14px', boxSizing: 'border-box' }}
+              placeholder="••••••••"
+              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>
           <button
             type="submit"
             disabled={isAnyLoading}
-            style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: 'bold', padding: '14px', border: 'none', borderRadius: '12px', fontSize: '14px', cursor: 'pointer', marginTop: '8px', boxShadow: '0 4px 12px rgba(234,88,12,0.2)' }}
+            style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 4px 12px rgba(234,88,12,0.2)' }}
           >
-            {isAnyLoading ? 'Authenticating... Please wait' : 'Access Canteen Dashboard →'}
+            {isAnyLoading ? 'Signing in...' : 'Sign in to Canteen Portal →'}
           </button>
         </form>
 
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #e2e8f0', textAlign: 'center' }}>
+        {/* Quick Demo Login */}
+        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
           <button
             type="button"
             disabled={isAnyLoading}
-            onClick={() => {
-              setEmail('main.canteen@nitjsr.ac.in');
-              setPassword('Staff@123');
-              handleSubmit();
-            }}
-            style={{ width: '100%', backgroundColor: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', borderRadius: '12px', padding: '10px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+            onClick={handleQuickDemo}
+            style={{ width: '100%', backgroundColor: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', borderRadius: '12px', padding: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
           >
-            🔑 Quick Demo Login (main.canteen@nitjsr.ac.in)
+            ⚡ 1-Click Staff Login (main.canteen@nitjsr.ac.in)
           </button>
         </div>
       </div>

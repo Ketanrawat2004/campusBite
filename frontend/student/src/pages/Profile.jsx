@@ -128,7 +128,7 @@ export default function ProfilePage() {
               <input type="email" value={user?.email || ''} disabled className="input bg-slate-100 cursor-not-allowed text-slate-500 font-mono text-xs" />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp Mobile Number (Used for Auto Bills)</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mobile Number</label>
               <input
                 type="text"
                 value={profileForm.phone}

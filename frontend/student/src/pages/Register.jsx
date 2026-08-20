@@ -92,7 +92,7 @@ export default function RegisterPage() {
       return;
     }
     if (!form.phone.trim() || form.phone.replace(/\D/g, '').length < 10) {
-      setError('Valid 10-digit WhatsApp Mobile Number is required for automatic bill receipts');
+      setError('Valid 10-digit Mobile Number is required');
       return;
     }
 
@@ -263,7 +263,7 @@ export default function RegisterPage() {
               )}
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp Mobile Number * (For Auto Bills)</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Mobile Number *</label>
               <input
                 value={form.phone}
                 onChange={(e) => update('phone', e.target.value)}

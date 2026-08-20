@@ -34,7 +34,7 @@
 2. **High Individual Delivery Costs**: Slashes student delivery fees from ₹20 down to ₹10–15 using a **Smart Group Delivery Batching Algorithm** heading to identical hostel blocks.
 3. **Kitchen Order Bottlenecks**: Empowers canteen staff with dynamic queue throttling (`Online`, `⚡ Rush Mode / 30m Prep`, `🚫 Queue Paused`) synchronized to student devices within 2 seconds.
 4. **Reliable Instant Checkout**: Sub-50ms non-blocking payment verification via Razorpay and Kafka asynchronous event streaming.
-5. **Auditable Tax Billing**: Automated generation of itemized PDF tax invoices sent to student inboxes alongside instant WhatsApp order receipts.
+5. **Auditable Tax Billing**: Automated generation of itemized PDF tax invoices sent directly to student email inboxes.
 
 ---
 
@@ -74,7 +74,6 @@ flowchart TB
     subgraph External["🌐 External Integrations"]
         RZP["💳 Razorpay Payment Gateway"]
         BRV["📧 Brevo / Resend / Gmail SMTP"]
-        WHA["📱 Meta WhatsApp Cloud API"]
     end
 
     SP -->|REST / HTTPS| GW
@@ -95,8 +94,7 @@ flowchart TB
     KF -->|BATCH_EXPIRED| WK
 
     PS -->|Verifies Signatures| RZP
-    NS -->|Dispatches Invoices| BRV
-    NS -->|Dispatches Receipts| WHA
+    NS -->|Dispatches Invoices & Receipts| BRV
 ```
 
 ---
@@ -127,7 +125,7 @@ flowchart TB
 │ Canteen Service    │ │ Notification Serv. │ │ Admin Analytics    │
 │ • Live Kanban Sync │ │ • Multi-MTA Email  │ │ • Real-Time Rev    │
 │ • Audio Ding Alert │ │ • PDF Tax Invoice  │ │ • Hourly Ingestion │
-│ • Prep Countdown   │ │ • WhatsApp Ping    │ │ • Bestseller Rank  │
+│ • Prep Countdown   │ │ • Live Email Ping  │ │ • Bestseller Rank  │
 └────────────────────┘ └────────────────────┘ └────────────────────┘
 ```
 

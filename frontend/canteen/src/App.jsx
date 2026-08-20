@@ -350,6 +350,7 @@ function getPasswordStrength(pwd) {
 }
 
 function CanteenLoginPage({ onLogin }) {
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -357,13 +358,17 @@ function CanteenLoginPage({ onLogin }) {
   const [loadingMsg, setLoadingMsg] = useState('Signing in...');
   const [showPwd, setShowPwd] = useState(false);
 
+  // Registration state
+  const [regForm, setRegForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  const [regShowPwd, setRegShowPwd] = useState(false);
+  const regStrength = getPasswordStrength(regForm.password);
+
   // Forgot password state
-  const [showForgot, setShowForgot] = useState(false);
   const [forgot, setForgot] = useState({ email: '', newPassword: '', confirm: '' });
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotDone, setForgotDone] = useState(false);
   const [showNewPwd, setShowNewPwd] = useState(false);
-  const strength = getPasswordStrength(forgot.newPassword);
+  const forgotStrength = getPasswordStrength(forgot.newPassword);
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
 
@@ -408,7 +413,7 @@ function CanteenLoginPage({ onLogin }) {
   };
 
   useEffect(() => {
-    if (showForgot) return;
+    if (authMode !== 'login') return;
     if (!window.google?.accounts) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
@@ -445,13 +450,13 @@ function CanteenLoginPage({ onLogin }) {
         }
       }
     }
-  }, [GOOGLE_CLIENT_ID, showForgot]);
+  }, [GOOGLE_CLIENT_ID, authMode]);
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      const { data } = await axios.post(`${API_BASE}/auth/login`, { email: email.trim(), password });
       if (data.data.user.role !== 'CANTEEN_STAFF' && data.data.user.role !== 'ADMIN') {
         toast.error('Access restricted to Canteen Staff & Admin');
         return;
@@ -466,14 +471,54 @@ function CanteenLoginPage({ onLogin }) {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!regForm.name.trim() || !regForm.email.trim()) {
+      toast.error('Full Name and Email are required');
+      return;
+    }
+    if (!regStrength.checks.length || !regStrength.checks.upper || !regStrength.checks.lower ||
+        !regStrength.checks.number || !regStrength.checks.special) {
+      toast.error('Password must meet all 5 strength requirements');
+      return;
+    }
+    if (regForm.password !== regForm.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        name: regForm.name.trim(),
+        email: regForm.email.trim().toLowerCase(),
+        password: regForm.password,
+        phone: regForm.phone.trim() || '9876543210',
+        role: 'CANTEEN_STAFF',
+      };
+      const { data } = await axios.post(`${API_BASE}/auth/register`, payload);
+      if (data.data?.accessToken && data.data?.user) {
+        onLogin(data.data.accessToken, data.data.user);
+        toast.success('Staff account created successfully! Welcome to Canteen Operations 🎉');
+      } else {
+        toast.success('Account created! Please sign in.');
+        setAuthMode('login');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error?.message || 'Staff registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleForgot = async (e) => {
     e.preventDefault();
     if (!forgot.email.trim()) {
       toast.error('Enter your staff email');
       return;
     }
-    if (!strength.checks.length || !strength.checks.upper || !strength.checks.lower ||
-        !strength.checks.number || !strength.checks.special) {
+    if (!forgotStrength.checks.length || !forgotStrength.checks.upper || !forgotStrength.checks.lower ||
+        !forgotStrength.checks.number || !forgotStrength.checks.special) {
       toast.error('Password must meet all 5 strength requirements');
       return;
     }
@@ -497,133 +542,22 @@ function CanteenLoginPage({ onLogin }) {
     }
   };
 
-  if (showForgot) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '24px 20px' : '36px', maxWidth: '420px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px auto', borderRadius: '16px' }} />
-            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>Reset Staff Password</h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>Enter your email and choose a strong new password</p>
-          </div>
-
-          {forgotDone ? (
-            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto' }}>✅</div>
-              <div>
-                <p style={{ fontWeight: '800', color: '#0f172a', fontSize: '16px', margin: 0 }}>Password Updated!</p>
-                <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>Sign in to Canteen Staff Portal now.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setShowForgot(false); setForgotDone(false); setForgot({ email: '', newPassword: '', confirm: '' }); }}
-                style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}
-              >
-                Sign In →
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Registered Staff Email *</label>
-                <input
-                  type="email"
-                  required
-                  value={forgot.email}
-                  onChange={(e) => setForgot((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="staff@nitjsr.ac.in"
-                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>New Password *</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showNewPwd ? 'text' : 'password'}
-                    required
-                    value={forgot.newPassword}
-                    onChange={(e) => setForgot((f) => ({ ...f, newPassword: e.target.value }))}
-                    placeholder="Min 8 chars, upper, lower, number, symbol"
-                    style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPwd((v) => !v)}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
-                  >
-                    {showNewPwd ? 'Hide' : 'Show'}
-                  </button>
-                </div>
-
-                {forgot.newPassword && (
-                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                      <span style={{ color: '#94a3b8' }}>Strength</span>
-                      <span style={{ fontWeight: '700', color: strength.color }}>{strength.label}</span>
-                    </div>
-                    <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: strength.width, backgroundColor: strength.color, transition: 'all 0.3s' }} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
-                      {[
-                        ['8+ chars', strength.checks.length],
-                        ['Uppercase (A-Z)', strength.checks.upper],
-                        ['Lowercase (a-z)', strength.checks.lower],
-                        ['Number (0-9)', strength.checks.number],
-                        ['Special (!@#…)', strength.checks.special],
-                      ].map(([lbl, ok]) => (
-                        <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
-                          <span>{ok ? '✓' : '○'}</span>
-                          <span>{lbl}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Confirm New Password *</label>
-                <input
-                  type="password"
-                  required
-                  value={forgot.confirm}
-                  onChange={(e) => setForgot((f) => ({ ...f, confirm: e.target.value }))}
-                  placeholder="••••••••"
-                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={forgotLoading}
-                style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px' }}
-              >
-                {forgotLoading ? 'Updating…' : 'Update Password →'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForgot(false)}
-                style={{ width: '100%', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
-              >
-                ← Back to Staff Sign In
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
       <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '24px 20px' : '36px', maxWidth: '420px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06)' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <img src="/images/campusbite_logo.png" alt="CampusBite Logo" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px auto', borderRadius: '16px', boxShadow: '0 4px 10px rgba(0,0,0,0.06)' }} />
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>Canteen Staff Portal</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>NIT Jamshedpur • Kitchen Operations & Menu Control</p>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
+            {authMode === 'login' && 'Canteen Staff Portal'}
+            {authMode === 'register' && 'Create Staff Account'}
+            {authMode === 'forgot' && 'Reset Staff Password'}
+          </h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+            {authMode === 'login' && 'NIT Jamshedpur • Kitchen Operations & Menu Control'}
+            {authMode === 'register' && 'Register a new Canteen Kitchen Staff account'}
+            {authMode === 'forgot' && 'Enter your email and choose a strong new password'}
+          </p>
         </div>
 
         {/* Clean Loading State */}
@@ -634,69 +568,314 @@ function CanteenLoginPage({ onLogin }) {
           </div>
         )}
 
-        {/* Google OAuth Button */}
-        <div style={{ marginBottom: '18px', opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
-          <div id="canteen-google-btn" style={{ display: 'flex', justifyContent: 'center', minHeight: '44px' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
-            <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
-            <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>or sign in with password</span>
-            <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
-          </div>
-        </div>
+        {/* ─── 1. LOGIN MODE ─── */}
+        {authMode === 'login' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Google OAuth Button */}
+            <div style={{ opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
+              <div id="canteen-google-btn" style={{ display: 'flex', justifyContent: 'center', minHeight: '44px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>or sign in with password</span>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#f1f5f9' }} />
+              </div>
+            </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
-            <input
-              type="email"
-              required
-              disabled={isAnyLoading}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="main.canteen@nitjsr.ac.in"
-              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
-            />
-          </div>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Password</label>
+            {/* Form */}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
+                <input
+                  type="email"
+                  required
+                  disabled={isAnyLoading}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="main.canteen@nitjsr.ac.in"
+                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                />
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('forgot')}
+                    disabled={isAnyLoading}
+                    style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPwd ? 'text' : 'password'}
+                    required
+                    disabled={isAnyLoading}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    {showPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={isAnyLoading}
+                style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 4px 12px rgba(234,88,12,0.2)' }}
+              >
+                {isAnyLoading ? 'Signing in...' : 'Sign in to Canteen Portal →'}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
               <button
                 type="button"
-                onClick={() => setShowForgot(true)}
+                onClick={() => setAuthMode('register')}
                 disabled={isAnyLoading}
-                style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
               >
-                Forgot password?
+                Need a new staff account? <strong style={{ color: '#ea580c' }}>Create Account →</strong>
               </button>
             </div>
-            <div style={{ position: 'relative' }}>
+          </div>
+        )}
+
+        {/* ─── 2. REGISTER MODE ─── */}
+        {authMode === 'register' && (
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Full Name *</label>
               <input
-                type={showPwd ? 'text' : 'password'}
+                type="text"
                 required
                 disabled={isAnyLoading}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                value={regForm.name}
+                onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                placeholder="Ramesh Kumar"
+                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
-              >
-                {showPwd ? 'Hide' : 'Show'}
-              </button>
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email *</label>
+              <input
+                type="email"
+                required
+                disabled={isAnyLoading}
+                value={regForm.email}
+                onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                placeholder="staff@nitjsr.ac.in"
+                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Mobile Number</label>
+              <input
+                type="tel"
+                disabled={isAnyLoading}
+                value={regForm.phone}
+                onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                placeholder="9876543210"
+                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Password *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={regShowPwd ? 'text' : 'password'}
+                  required
+                  disabled={isAnyLoading}
+                  value={regForm.password}
+                  onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                  placeholder="Min 8 chars, upper, lower, number, symbol"
+                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRegShowPwd((v) => !v)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                  {regShowPwd ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {regForm.password && (
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                    <span style={{ color: '#94a3b8' }}>Strength</span>
+                    <span style={{ fontWeight: '700', color: regStrength.color }}>{regStrength.label}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: regStrength.width, backgroundColor: regStrength.color, transition: 'all 0.3s' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
+                    {[
+                      ['8+ chars', regStrength.checks.length],
+                      ['Uppercase (A-Z)', regStrength.checks.upper],
+                      ['Lowercase (a-z)', regStrength.checks.lower],
+                      ['Number (0-9)', regStrength.checks.number],
+                      ['Special (!@#…)', regStrength.checks.special],
+                    ].map(([lbl, ok]) => (
+                      <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
+                        <span>{ok ? '✓' : '○'}</span>
+                        <span>{lbl}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Confirm Password *</label>
+              <input
+                type="password"
+                required
+                disabled={isAnyLoading}
+                value={regForm.confirm}
+                onChange={(e) => setRegForm({ ...regForm, confirm: e.target.value })}
+                placeholder="••••••••"
+                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isAnyLoading}
+              style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px' }}
+            >
+              {isAnyLoading ? 'Registering...' : 'Create Staff Account →'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthMode('login')}
+              style={{ width: '100%', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
+            >
+              ← Already have a Staff account? Sign In
+            </button>
+          </form>
+        )}
+
+        {/* ─── 3. FORGOT PASSWORD MODE ─── */}
+        {authMode === 'forgot' && (
+          <div>
+            {forgotDone ? (
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto' }}>✅</div>
+                <div>
+                  <p style={{ fontWeight: '800', color: '#0f172a', fontSize: '16px', margin: 0 }}>Password Updated!</p>
+                  <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>Sign in to Canteen Staff Portal now.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('login'); setForgotDone(false); setForgot({ email: '', newPassword: '', confirm: '' }); }}
+                  style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  Sign In →
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Registered Staff Email *</label>
+                  <input
+                    type="email"
+                    required
+                    disabled={isAnyLoading}
+                    value={forgot.email}
+                    onChange={(e) => setForgot((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="staff@nitjsr.ac.in"
+                    style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>New Password *</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showNewPwd ? 'text' : 'password'}
+                      required
+                      disabled={isAnyLoading}
+                      value={forgot.newPassword}
+                      onChange={(e) => setForgot((f) => ({ ...f, newPassword: e.target.value }))}
+                      placeholder="Min 8 chars, upper, lower, number, symbol"
+                      style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPwd((v) => !v)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                      {showNewPwd ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+
+                  {forgot.newPassword && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                        <span style={{ color: '#94a3b8' }}>Strength</span>
+                        <span style={{ fontWeight: '700', color: forgotStrength.color }}>{forgotStrength.label}</span>
+                      </div>
+                      <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: forgotStrength.width, backgroundColor: forgotStrength.color, transition: 'all 0.3s' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
+                        {[
+                          ['8+ chars', forgotStrength.checks.length],
+                          ['Uppercase (A-Z)', forgotStrength.checks.upper],
+                          ['Lowercase (a-z)', forgotStrength.checks.lower],
+                          ['Number (0-9)', forgotStrength.checks.number],
+                          ['Special (!@#…)', forgotStrength.checks.special],
+                        ].map(([lbl, ok]) => (
+                          <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
+                            <span>{ok ? '✓' : '○'}</span>
+                            <span>{lbl}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Confirm New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    disabled={isAnyLoading}
+                    value={forgot.confirm}
+                    onChange={(e) => setForgot((f) => ({ ...f, confirm: e.target.value }))}
+                    placeholder="••••••••"
+                    style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px' }}
+                >
+                  {forgotLoading ? 'Updating…' : 'Update Password →'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  style={{ width: '100%', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
+                >
+                  ← Back to Staff Sign In
+                </button>
+              </form>
+            )}
           </div>
-          <button
-            type="submit"
-            disabled={isAnyLoading}
-            style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px', boxShadow: '0 4px 12px rgba(234,88,12,0.2)' }}
-          >
-            {isAnyLoading ? 'Signing in...' : 'Sign in to Canteen Portal →'}
-          </button>
-        </form>
+        )}
       </div>
     </div>
   );

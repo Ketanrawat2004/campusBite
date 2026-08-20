@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axiosClient from '../api/client';
+import axiosClient, { warmupServer } from '../api/client';
+import { saveCachedHomeData } from './Home';
 import toast from 'react-hot-toast';
 
 const CANTEEN_URL = import.meta.env.VITE_CANTEEN_URL || 'https://campusbite-canteen.onrender.com';
@@ -47,6 +48,9 @@ export default function LoginPage() {
   const [error, setError]     = useState('');
   const [showPwd, setShowPwd] = useState(false);
 
+  /* ── Progressive loading feedback ── */
+  const [loadingMessage, setLoadingMessage] = useState('Signing in to CampusBite...');
+
   /* ── Forgot-password state ── */
   const [showForgot, setShowForgot] = useState(false);
   const [forgot, setForgot]         = useState({ email: '', newPassword: '', confirm: '' });
@@ -59,10 +63,62 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-utbl0j3a1kh2aprj335g9ru1god9ospj.apps.googleusercontent.com';
 
+  const isAnyLoading = loading || googleLoading;
+
+  // Pre-warm backend server as soon as login page opens
+  useEffect(() => {
+    warmupServer();
+  }, []);
+
+  // Progressive loading status message for server cold starts
+  useEffect(() => {
+    if (!isAnyLoading) {
+      setLoadingMessage('Signing in to CampusBite...');
+      return;
+    }
+
+    const t1 = setTimeout(() => {
+      setLoadingMessage('Connecting to secure campus servers... Please wait');
+    }, 2500);
+
+    const t2 = setTimeout(() => {
+      setLoadingMessage('Waking up server & loading your account details... Almost there! 🍱');
+    }, 6000);
+
+    const t3 = setTimeout(() => {
+      setLoadingMessage('Finalizing your session... Thank you for your patience! ⚡');
+    }, 12000);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isAnyLoading]);
+
+  // Helper to preload home data in background right after authentication
+  const preloadHomeAndNavigate = useCallback(async (token, userData, firstName) => {
+    // 1. Set auth state immediately
+    await login(token, userData);
+    toast.success(`Welcome, ${firstName}! 🎉`);
+
+    // 2. Fire background prefetch for canteens so Home renders instantly with 0ms delay
+    axiosClient.get('/canteens?limit=100').then((res) => {
+      if (res.data?.data) {
+        saveCachedHomeData(res.data.data, null);
+      }
+    }).catch(() => {});
+
+    // 3. Smooth transition to home
+    navigate('/home', { replace: true });
+  }, [login, navigate]);
+
   const handleGoogleResponse = useCallback(async (response) => {
     setGoogleLoading(true);
+    setError('');
+
     if (!response?.credential) {
-      toast.error('Google credential not found. Please try again.');
+      toast.error('Google credential not received. Please try again.');
       setGoogleLoading(false);
       return;
     }
@@ -75,19 +131,19 @@ export default function LoginPage() {
       if (resultData?.data?.accessToken && resultData?.data?.user) {
         const userName = resultData.data.user.name || resultData.data.user.email || 'User';
         const firstName = String(userName).split(' ')[0] || 'User';
-        await login(resultData.data.accessToken, resultData.data.user);
-        toast.success(`Welcome, ${firstName}! 🎉`);
-        navigate('/home', { replace: true });
+        await preloadHomeAndNavigate(resultData.data.accessToken, resultData.data.user, firstName);
       } else {
-        throw new Error('Invalid user payload');
+        throw new Error('Invalid user payload received from server');
       }
     } catch (err) {
       console.error('Google Auth Error:', err);
-      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use email & password.');
+      const errMsg = err.response?.data?.error?.message || err.message || 'Google sign-in failed. Please try again or use email.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setGoogleLoading(false);
     }
-  }, [login, navigate]);
+  }, [preloadHomeAndNavigate]);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
@@ -140,9 +196,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { data } = await axiosClient.post('/auth/login', form);
-      await login(data.data.accessToken, data.data.user);
-      toast.success(`Welcome back, ${data.data.user.name.split(' ')[0]}! 🎉`);
-      navigate('/home', { replace: true });
+      const firstName = (data.data?.user?.name || 'Student').split(' ')[0];
+      await preloadHomeAndNavigate(data.data.accessToken, data.data.user, firstName);
     } catch (err) {
       const msg = err.response?.data?.error?.message || 'Invalid email or password.';
       setError(msg);
@@ -273,7 +328,7 @@ export default function LoginPage() {
 
   /* ── Main Login View ── */
   return (
-    <div className="w-full max-w-md animate-slide-up px-3 sm:px-0">
+    <div className="w-full max-w-md animate-slide-up px-3 sm:px-0 relative">
       <div className="text-center mb-6 sm:mb-8">
         <img src="/images/campusbite_logo.png" alt="CampusBite"
           className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3 object-contain rounded-2xl shadow-md" />
@@ -281,11 +336,28 @@ export default function LoginPage() {
         <p className="text-slate-500 text-xs sm:text-sm mt-1">Sign in to your CampusBite account • NITJSR</p>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-4 sm:space-y-5">
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 shadow-xl space-y-4 sm:space-y-5 relative overflow-hidden">
+        {/* Progressive Loading Status Overlay Banner */}
+        {isAnyLoading && (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4 shadow-md animate-fade-in flex flex-col items-center text-center space-y-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              <span className="text-xs sm:text-sm font-bold text-orange-900">
+                {loadingMessage}
+              </span>
+            </div>
+            <p className="text-[11px] text-orange-700/80 font-medium">
+              Please wait without closing the page • Securing session...
+            </p>
+            <div className="w-full bg-orange-200/60 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-orange-600 h-full rounded-full animate-pulse w-full" />
+            </div>
+          </div>
+        )}
+
         {/* Google OAuth Sign-In */}
-        <div>
+        <div className={isAnyLoading ? 'opacity-60 pointer-events-none' : ''}>
           <div id="google-signin-btn" className="w-full flex justify-center min-h-[44px] overflow-visible" />
-          {googleLoading && <p className="text-center text-xs text-slate-400 mt-2 font-medium">Signing in with Google…</p>}
           <div className="flex items-center gap-3 my-4 sm:my-5">
             <div className="h-px flex-1 bg-slate-100" />
             <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase">or sign in with email</span>
@@ -294,9 +366,12 @@ export default function LoginPage() {
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl p-3 font-medium">
-            ⚠️ {error}
+        {error && !isAnyLoading && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm rounded-xl p-3 font-medium flex items-start gap-2">
+            <span className="flex-shrink-0">⚠️</span>
+            <div className="flex-1">
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
@@ -307,33 +382,42 @@ export default function LoginPage() {
               College Email
             </label>
             <input id="email" type="email" autoComplete="email" required
+              disabled={isAnyLoading}
               value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
               placeholder="rahul@nitjsr.ac.in"
-              className="input bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm" />
+              className="input bg-white text-slate-900 placeholder-slate-400 text-xs sm:text-sm disabled:bg-slate-50 disabled:text-slate-500" />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-bold text-slate-700 uppercase" htmlFor="password">Password</label>
-              <button type="button" onClick={() => setShowForgot(true)}
-                className="text-xs text-orange-600 hover:text-orange-700 font-semibold">
+              <button type="button" onClick={() => setShowForgot(true)} disabled={isAnyLoading}
+                className="text-xs text-orange-600 hover:text-orange-700 font-semibold disabled:opacity-50">
                 Forgot password?
               </button>
             </div>
             <div className="relative">
               <input id="password" type={showPwd ? 'text' : 'password'} autoComplete="current-password" required
+                disabled={isAnyLoading}
                 value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••" className="input bg-white text-slate-900 placeholder-slate-400 pr-12 text-xs sm:text-sm" />
-              <button type="button" onClick={() => setShowPwd(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold">
+                placeholder="••••••••" className="input bg-white text-slate-900 placeholder-slate-400 pr-12 text-xs sm:text-sm disabled:bg-slate-50 disabled:text-slate-500" />
+              <button type="button" onClick={() => setShowPwd(v => !v)} disabled={isAnyLoading}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold disabled:opacity-50">
                 {showPwd ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
 
-          <button type="submit" disabled={loading}
+          <button type="submit" disabled={isAnyLoading}
             className="btn btn-primary w-full btn-lg mt-2 font-bold shadow-md text-xs sm:text-sm py-2.5">
-            {loading ? 'Signing in…' : 'Sign in to CampusBite →'}
+            {isAnyLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Signing in... Please wait</span>
+              </span>
+            ) : (
+              'Sign in to CampusBite →'
+            )}
           </button>
         </form>
 

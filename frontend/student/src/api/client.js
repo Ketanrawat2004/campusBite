@@ -6,8 +6,23 @@ const axiosClient = axios.create({
   baseURL: BASE_URL,
   withCredentials: true, // for refresh token cookie
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
+  timeout: 45000, // 45s to accommodate potential Render backend cold starts
 });
+
+// Server pre-warming / wake-up utility
+let isWarming = false;
+export async function warmupServer() {
+  if (isWarming) return;
+  isWarming = true;
+  try {
+    // Ping public endpoint to trigger Render container spin-up early
+    await axios.get(`${BASE_URL}/canteens?limit=1`, { timeout: 15000 });
+  } catch {
+    // Silent catch — just wake-up signal
+  } finally {
+    setTimeout(() => { isWarming = false; }, 30000);
+  }
+}
 
 // Request interceptor — attach access token
 axiosClient.interceptors.request.use(

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axiosClient from '../api/client';
+import axiosClient, { warmupServer } from '../api/client';
+import { saveCachedHomeData } from './Home';
 import toast from 'react-hot-toast';
 
 export default function RegisterPage() {
@@ -9,6 +10,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('Creating your account...');
   const [error, setError] = useState('');
   const [hostels, setHostels] = useState([]);
 
@@ -24,6 +26,7 @@ export default function RegisterPage() {
   });
 
   useEffect(() => {
+    warmupServer();
     const fetchHostels = async () => {
       try {
         const { data } = await axiosClient.get('/hostels');
@@ -38,6 +41,19 @@ export default function RegisterPage() {
     };
     fetchHostels();
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setLoadingMsg('Creating your account...');
+      return;
+    }
+    const t1 = setTimeout(() => setLoadingMsg('Registering profile with campus servers... Please wait'), 2500);
+    const t2 = setTimeout(() => setLoadingMsg('Setting up your student dashboard... Almost done! 🍱'), 6000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [loading]);
 
   const update = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -100,6 +116,14 @@ export default function RegisterPage() {
       if (data.data && data.data.accessToken) {
         await login(data.data.accessToken, data.data.user);
         toast.success('Account created successfully! Welcome to CampusBite 🎉');
+
+        // Prefetch canteens in background for instant home render
+        axiosClient.get('/canteens?limit=100').then((res) => {
+          if (res.data?.data) {
+            saveCachedHomeData(res.data.data, null);
+          }
+        }).catch(() => {});
+
         navigate('/home', { replace: true });
       } else {
         toast.success('Account created! Please sign in.');
@@ -243,11 +267,22 @@ export default function RegisterPage() {
                 ))}
               </select>
             </div>
+            {loading && (
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-3.5 text-center space-y-1.5 animate-fade-in">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-orange-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                  <span className="text-xs font-bold text-orange-900">{loadingMsg}</span>
+                </div>
+                <p className="text-[11px] text-orange-600">Please wait without closing this window...</p>
+              </div>
+            )}
+
             <div className="flex gap-2 sm:gap-3 mt-2">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="btn btn-secondary flex-1 font-bold text-xs sm:text-sm py-2"
+                disabled={loading}
+                className="btn btn-secondary flex-1 font-bold text-xs sm:text-sm py-2 disabled:opacity-50"
               >
                 ← Back
               </button>

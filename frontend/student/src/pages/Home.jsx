@@ -3,17 +3,46 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axiosClient from '../api/client';
 
-// In-memory cache for instant page returns
-let cachedCanteens = null;
-let cachedBestsellers = null;
+// Local + Session cache for instant zero-lag rendering
+const CACHE_CANTEENS_KEY = 'campusbite_cached_canteens';
+const CACHE_BESTSELLERS_KEY = 'campusbite_cached_bestsellers';
+
+export function getCachedHomeData() {
+  try {
+    const rawC = sessionStorage.getItem(CACHE_CANTEENS_KEY) || localStorage.getItem(CACHE_CANTEENS_KEY);
+    const rawB = sessionStorage.getItem(CACHE_BESTSELLERS_KEY) || localStorage.getItem(CACHE_BESTSELLERS_KEY);
+    return {
+      canteens: rawC ? JSON.parse(rawC) : null,
+      bestsellers: rawB ? JSON.parse(rawB) : null,
+    };
+  } catch {
+    return { canteens: null, bestsellers: null };
+  }
+}
+
+export function saveCachedHomeData(canteens, bestsellers) {
+  try {
+    if (canteens && canteens.length > 0) {
+      sessionStorage.setItem(CACHE_CANTEENS_KEY, JSON.stringify(canteens));
+      localStorage.setItem(CACHE_CANTEENS_KEY, JSON.stringify(canteens));
+    }
+    if (bestsellers && bestsellers.length > 0) {
+      sessionStorage.setItem(CACHE_BESTSELLERS_KEY, JSON.stringify(bestsellers));
+      localStorage.setItem(CACHE_BESTSELLERS_KEY, JSON.stringify(bestsellers));
+    }
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 export default function HomePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [canteens, setCanteens] = useState(() => cachedCanteens || []);
-  const [bestsellers, setBestsellers] = useState(() => cachedBestsellers || []);
-  const [loading, setLoading] = useState(() => !cachedCanteens);
+  const initialCache = getCachedHomeData();
+  const [canteens, setCanteens] = useState(() => initialCache.canteens || []);
+  const [bestsellers, setBestsellers] = useState(() => initialCache.bestsellers || []);
+  const [loading, setLoading] = useState(() => !initialCache.canteens || initialCache.canteens.length === 0);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -29,14 +58,14 @@ export default function HomePage() {
 
         if (!isMounted) return;
 
-        const cList = canteenRes.data.data || [];
-        const bList = (searchRes.data.data || []).slice(0, 6);
+        const cList = canteenRes.data?.data || [];
+        const bList = (searchRes.data?.data || []).slice(0, 6);
 
-        cachedCanteens = cList;
-        cachedBestsellers = bList;
-
-        setCanteens(cList);
-        setBestsellers(bList);
+        if (cList.length > 0) {
+          setCanteens(cList);
+          setBestsellers(bList);
+          saveCachedHomeData(cList, bList);
+        }
       } catch (err) {
         console.error('Home fetch error:', err);
       } finally {
@@ -44,12 +73,12 @@ export default function HomePage() {
       }
     };
 
-    fetchHomeData(!cachedCanteens);
+    fetchHomeData(Boolean(initialCache.canteens && initialCache.canteens.length > 0));
 
-    // Smart Polling: 20 seconds, only when tab is visible
+    // Smart Polling: 30 seconds, only when tab is visible
     const interval = setInterval(() => {
       fetchHomeData(true);
-    }, 20000);
+    }, 30000);
 
     return () => {
       isMounted = false;
@@ -127,10 +156,16 @@ export default function HomePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="card h-48 bg-slate-100 animate-pulse" />
-            ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-3.5 py-2.5 rounded-2xl animate-pulse">
+              <span className="inline-block w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+              <span>Connecting to campus canteens & menus... Please wait</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="card h-48 bg-slate-100 animate-pulse rounded-2xl" />
+              ))}
+            </div>
           </div>
         ) : canteens.length === 0 ? (
           <div className="card p-8 text-center text-slate-500 font-medium text-xs sm:text-sm">

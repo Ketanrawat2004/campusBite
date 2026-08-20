@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axiosClient from '../api/client';
+import axiosClient, { warmupServer } from '../api/client';
 import toast from 'react-hot-toast';
 
 function getPasswordStrength(pwd) {
@@ -27,6 +27,10 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    warmupServer();
+  }, []);
 
   const strength = getPasswordStrength(newPassword);
 

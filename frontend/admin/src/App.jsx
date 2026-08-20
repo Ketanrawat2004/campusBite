@@ -338,7 +338,7 @@ function AdminDashboardPage({ token }) {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // 5s live sync
+    const interval = setInterval(fetchData, 3000); // 3s real-time live sync
     return () => clearInterval(interval);
   }, [token]);
 
@@ -353,7 +353,7 @@ function AdminDashboardPage({ token }) {
         </div>
         <span style={{ backgroundColor: '#ecfdf5', color: '#16a34a', fontWeight: '700', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', animation: 'pulse 1s infinite' }} />
-          ⚡ Live Auto-Sync (2s)
+          ⚡ Live Auto-Sync (3s)
         </span>
       </div>
 
@@ -427,33 +427,42 @@ function AdminLiveOrdersPage({ token }) {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // 5s live sync
+    const interval = setInterval(fetchOrders, 3000); // 3s real-time live sync
     return () => clearInterval(interval);
   }, [token, statusFilter]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
+    // ⚡ Instant Optimistic Update
+    const prevOrders = [...orders];
+    setOrders((current) =>
+      current.map((o) => (o._id === orderId ? { ...o, status: newStatus } : o))
+    );
+    toast.success(`Order status updated to ${newStatus}`);
+
     try {
       await axios.patch(
         `${API_BASE}/orders/${orderId}/status`,
         { status: newStatus, note: 'Status override by System Admin' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Order status updated to ${newStatus}`);
-      fetchOrders();
     } catch (err) {
+      setOrders(prevOrders);
       toast.error('Failed to update order status');
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm('Admin Override: Permanently delete this order?')) return;
+    const prevOrders = [...orders];
+    setOrders((current) => current.filter((o) => o._id !== orderId));
+    toast.success('Order deleted by Admin');
+
     try {
       await axios.delete(`${API_BASE}/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success('Order deleted by Admin');
-      fetchOrders();
     } catch (err) {
+      setOrders(prevOrders);
       toast.error('Failed to delete order');
     }
   };
@@ -583,15 +592,23 @@ function AdminCanteensPage({ token }) {
   }, []);
 
   const handleToggleCanteen = async (canteenId, currentAcceptingState) => {
+    // ⚡ Instant Optimistic Update
+    const nextAcceptingState = !currentAcceptingState;
+    setCanteens((prev) =>
+      prev.map((c) => (c._id === canteenId ? { ...c, acceptingOrders: nextAcceptingState } : c))
+    );
+    toast.success(`Canteen is now ${nextAcceptingState ? 'OPEN 🟢' : 'CLOSED 🔴'}`);
+
     try {
       await axios.patch(
         `${API_BASE}/canteens/${canteenId}/status`,
-        { acceptingOrders: !currentAcceptingState },
+        { acceptingOrders: nextAcceptingState },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Canteen status updated!`);
-      fetchCanteens();
     } catch (err) {
+      setCanteens((prev) =>
+        prev.map((c) => (c._id === canteenId ? { ...c, acceptingOrders: currentAcceptingState } : c))
+      );
       toast.error('Failed to update canteen status');
     }
   };

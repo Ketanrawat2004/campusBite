@@ -23,22 +23,23 @@ export default function OrderTrackingPage() {
   useEffect(() => {
     fetchTracking();
     const interval = setInterval(() => {
-      if (!document.hidden && tracking?.status !== 'DELIVERED' && tracking?.status !== 'CANCELLED') {
+      if (!document.hidden && tracking?.status !== 'DELIVERED' && tracking?.status !== 'CANCELLED' && tracking?.status !== 'COMPLETED') {
         fetchTracking();
       }
-    }, 5000);
+    }, 2500); // 2.5s fast real-time status sync
     return () => clearInterval(interval);
   }, [orderId, tracking?.status]);
 
   const handleCancelOrder = async () => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
     setCancelling(true);
+    setTracking((prev) => (prev ? { ...prev, status: 'CANCELLED' } : prev));
     try {
       await axiosClient.patch(`/orders/${orderId}/cancel`, { reason: 'Cancelled by student' });
       toast.success('Order cancelled successfully');
-      fetchTracking();
     } catch (err) {
       toast.error(err.response?.data?.error?.message || 'Failed to cancel order');
+      fetchTracking();
     } finally {
       setCancelling(false);
     }

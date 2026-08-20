@@ -651,34 +651,43 @@ function OrderQueuePage({ token, user, soundEnabled }) {
 
   useEffect(() => {
     fetchQueue();
-    const interval = setInterval(fetchQueue, 4000); // 4s real-time queue refresh
+    const interval = setInterval(fetchQueue, 2500); // 2.5s real-time queue refresh
     return () => clearInterval(interval);
   }, [token, soundEnabled, selectedCanteenId]);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
+    // ⚡ Instant Optimistic Update (0ms UI latency)
+    const prevOrders = [...orders];
+    setOrders((current) =>
+      current.map((o) => (o._id === orderId ? { ...o, status: newStatus } : o))
+    );
+    toast.success(`Order status updated to ${newStatus}`);
+
     try {
       await axios.patch(
         `${API_BASE}/orders/${orderId}/status`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Order status updated to ${newStatus}`);
-      fetchQueue();
     } catch (err) {
+      setOrders(prevOrders);
       toast.error(err.response?.data?.error?.message || 'Status update failed');
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm('Are you sure you want to delete this order from the queue?')) return;
+    const prevOrders = [...orders];
+    setOrders((current) => current.filter((o) => o._id !== orderId));
+    toast.success('Order deleted from queue');
+
     try {
       await axios.delete(`${API_BASE}/orders/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success('Order deleted from queue');
-      fetchQueue();
     } catch (err) {
-      toast.error('Failed to delete order');
+      setOrders(prevOrders);
+      toast.error('Failed to delete order from server');
     }
   };
 
@@ -1152,29 +1161,56 @@ function MenuMgmtPage({ token, user }) {
   }, [token]);
 
   const handleToggleAvailability = async (itemId, currentVal) => {
+    // ⚡ Instant Optimistic Toggle (0ms delay, no screen blanking)
+    const nextVal = !currentVal;
+    setCategories((prevCats) =>
+      prevCats.map((cat) => ({
+        ...cat,
+        items: (cat.items || []).map((it) =>
+          it._id === itemId ? { ...it, isAvailable: nextVal } : it
+        ),
+      }))
+    );
+    toast.success(nextVal ? 'Marked In Stock ✓' : 'Marked Out of Stock ✕');
+
     try {
       await axios.patch(
         `${API_BASE}/menu-items/${itemId}/availability`,
-        { isAvailable: !currentVal },
+        { isAvailable: nextVal },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Stock availability updated');
-      fetchMenu();
     } catch {
-      toast.error('Failed to update availability');
+      // Rollback on server error
+      setCategories((prevCats) =>
+        prevCats.map((cat) => ({
+          ...cat,
+          items: (cat.items || []).map((it) =>
+            it._id === itemId ? { ...it, isAvailable: currentVal } : it
+          ),
+        }))
+      );
+      toast.error('Failed to update availability on server');
     }
   };
 
   const handleDeleteItem = async (itemId, itemName) => {
     if (!window.confirm(`Delete ${itemName} from menu?`)) return;
+    const prevCats = [...categories];
+    setCategories((prev) =>
+      prev.map((cat) => ({
+        ...cat,
+        items: (cat.items || []).filter((it) => it._id !== itemId),
+      }))
+    );
+    toast.success(`${itemName} removed from menu`);
+
     try {
       await axios.delete(`${API_BASE}/menu-items/${itemId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      toast.success(`${itemName} removed from menu`);
-      fetchMenu();
     } catch {
-      toast.error('Failed to delete menu item');
+      setCategories(prevCats);
+      toast.error('Failed to delete menu item from server');
     }
   };
 

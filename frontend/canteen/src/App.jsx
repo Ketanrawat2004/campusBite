@@ -340,7 +340,7 @@ function CanteenLoginPage({ onLogin }) {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('Signing in...');
 
-  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-utbl0j3a1kh2aprj335g9ru1god9ospj.apps.googleusercontent.com';
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
 
   const isAnyLoading = loading || googleLoading;
 

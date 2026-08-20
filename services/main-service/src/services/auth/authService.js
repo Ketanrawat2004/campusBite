@@ -38,15 +38,20 @@ async function register(data) {
   // Create verification token
   const { token: verifyToken, hash: verifyHash } = tokenService.generateOpaqueToken();
 
+  const targetRole = data.role && Object.values(USER_ROLES).includes(data.role)
+    ? data.role
+    : USER_ROLES.STUDENT;
+
   const user = new User({
     collegeId: targetCollegeId,
     name,
     email: email.toLowerCase(),
     passwordHash: password, // Will be hashed by pre-save hook in User model
-    phone,
-    role: USER_ROLES.STUDENT,
-    studentProfile: studentProfile || {},
-    isVerified: true, // Mark verified in dev mode for immediate login
+    phone: phone || (targetRole === USER_ROLES.ADMIN ? '9876543210' : undefined),
+    role: targetRole,
+    studentProfile: targetRole === USER_ROLES.STUDENT ? (studentProfile || {}) : undefined,
+    canteenProfile: targetRole === USER_ROLES.CANTEEN_STAFF ? (data.canteenProfile || {}) : undefined,
+    isVerified: true, // Mark verified for immediate login
     emailVerificationToken: verifyHash,
     emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
   });

@@ -333,12 +333,37 @@ export default function CanteenApp() {
   );
 }
 
+function getPasswordStrength(pwd) {
+  let score = 0;
+  const checks = {
+    length:  (pwd || '').length >= 8,
+    upper:   /[A-Z]/.test(pwd || ''),
+    lower:   /[a-z]/.test(pwd || ''),
+    number:  /\d/.test(pwd || ''),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd || ''),
+  };
+  score = Object.values(checks).filter(Boolean).length;
+  if (score <= 2) return { label: 'Weak',   color: '#ef4444', width: '25%',  checks };
+  if (score === 3) return { label: 'Fair',   color: '#f97316', width: '50%',  checks };
+  if (score === 4) return { label: 'Good',   color: '#eab308', width: '75%',  checks };
+  return            { label: 'Strong', color: '#22c55e', width: '100%', checks };
+}
+
 function CanteenLoginPage({ onLogin }) {
-  const [email, setEmail] = useState('main.canteen@nitjsr.ac.in');
-  const [password, setPassword] = useState('Staff@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('Signing in...');
+  const [showPwd, setShowPwd] = useState(false);
+
+  // Forgot password state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgot, setForgot] = useState({ email: '', newPassword: '', confirm: '' });
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotDone, setForgotDone] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const strength = getPasswordStrength(forgot.newPassword);
 
   const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-mqlv06i6bi1n48od9lu7c5ubtl434q2l.apps.googleusercontent.com';
 
@@ -383,6 +408,7 @@ function CanteenLoginPage({ onLogin }) {
   };
 
   useEffect(() => {
+    if (showForgot) return;
     if (!window.google?.accounts) {
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
@@ -419,7 +445,7 @@ function CanteenLoginPage({ onLogin }) {
         }
       }
     }
-  }, [GOOGLE_CLIENT_ID]);
+  }, [GOOGLE_CLIENT_ID, showForgot]);
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -440,21 +466,155 @@ function CanteenLoginPage({ onLogin }) {
     }
   };
 
-  const handleQuickDemo = (e) => {
-    if (e) e.preventDefault();
-    setEmail('main.canteen@nitjsr.ac.in');
-    setPassword('Staff@123');
-    setLoading(true);
-    axios.post(`${API_BASE}/auth/login`, { email: 'main.canteen@nitjsr.ac.in', password: 'Staff@123' })
-      .then(res => {
-        onLogin(res.data.data.accessToken, res.data.data.user);
-        toast.success('Logged into Main Canteen Dashboard! 🎉');
-      })
-      .catch(err => {
-        toast.error(err.response?.data?.error?.message || 'Demo sign-in failed');
-      })
-      .finally(() => setLoading(false));
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    if (!forgot.email.trim()) {
+      toast.error('Enter your staff email');
+      return;
+    }
+    if (!strength.checks.length || !strength.checks.upper || !strength.checks.lower ||
+        !strength.checks.number || !strength.checks.special) {
+      toast.error('Password must meet all 5 strength requirements');
+      return;
+    }
+    if (forgot.newPassword !== forgot.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/auth/forgot-password`, {
+        email: forgot.email.trim().toLowerCase(),
+        newPassword: forgot.newPassword,
+      });
+      setForgotDone(true);
+      toast.success(data.message || 'Password updated successfully! You can now sign in.');
+    } catch (err) {
+      toast.error(err.response?.data?.error?.message || 'Failed to update password');
+    } finally {
+      setForgotLoading(false);
+    }
   };
+
+  if (showForgot) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '24px', padding: window.innerWidth < 480 ? '24px 20px' : '36px', maxWidth: '420px', width: '100%', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06)' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px auto', borderRadius: '16px' }} />
+            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>Reset Staff Password</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>Enter your email and choose a strong new password</p>
+          </div>
+
+          {forgotDone ? (
+            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto' }}>✅</div>
+              <div>
+                <p style={{ fontWeight: '800', color: '#0f172a', fontSize: '16px', margin: 0 }}>Password Updated!</p>
+                <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>Sign in to Canteen Staff Portal now.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setShowForgot(false); setForgotDone(false); setForgot({ email: '', newPassword: '', confirm: '' }); }}
+                style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer' }}
+              >
+                Sign In →
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Registered Staff Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={forgot.email}
+                  onChange={(e) => setForgot((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="staff@nitjsr.ac.in"
+                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>New Password *</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showNewPwd ? 'text' : 'password'}
+                    required
+                    value={forgot.newPassword}
+                    onChange={(e) => setForgot((f) => ({ ...f, newPassword: e.target.value }))}
+                    placeholder="Min 8 chars, upper, lower, number, symbol"
+                    style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPwd((v) => !v)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    {showNewPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+
+                {forgot.newPassword && (
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                      <span style={{ color: '#94a3b8' }}>Strength</span>
+                      <span style={{ fontWeight: '700', color: strength.color }}>{strength.label}</span>
+                    </div>
+                    <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: strength.width, backgroundColor: strength.color, transition: 'all 0.3s' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
+                      {[
+                        ['8+ chars', strength.checks.length],
+                        ['Uppercase (A-Z)', strength.checks.upper],
+                        ['Lowercase (a-z)', strength.checks.lower],
+                        ['Number (0-9)', strength.checks.number],
+                        ['Special (!@#…)', strength.checks.special],
+                      ].map(([lbl, ok]) => (
+                        <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
+                          <span>{ok ? '✓' : '○'}</span>
+                          <span>{lbl}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Confirm New Password *</label>
+                <input
+                  type="password"
+                  required
+                  value={forgot.confirm}
+                  onChange={(e) => setForgot((f) => ({ ...f, confirm: e.target.value }))}
+                  placeholder="••••••••"
+                  style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={forgotLoading}
+                style={{ width: '100%', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: '700', padding: '12px', border: 'none', borderRadius: '12px', fontSize: '13px', cursor: 'pointer', marginTop: '4px' }}
+              >
+                {forgotLoading ? 'Updating…' : 'Update Password →'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForgot(false)}
+                style={{ width: '100%', background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
+              >
+                ← Back to Staff Sign In
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f8fafc' }}>
@@ -490,6 +650,7 @@ function CanteenLoginPage({ onLogin }) {
             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Staff Email</label>
             <input
               type="email"
+              required
               disabled={isAnyLoading}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -498,15 +659,35 @@ function CanteenLoginPage({ onLogin }) {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>Password</label>
-            <input
-              type="password"
-              disabled={isAnyLoading}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase' }}>Password</label>
+              <button
+                type="button"
+                onClick={() => setShowForgot(true)}
+                disabled={isAnyLoading}
+                style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPwd ? 'text' : 'password'}
+                required
+                disabled={isAnyLoading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{ width: '100%', backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '10px 50px 10px 14px', color: '#0f172a', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd((v) => !v)}
+                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+              >
+                {showPwd ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
           <button
             type="submit"
@@ -516,18 +697,6 @@ function CanteenLoginPage({ onLogin }) {
             {isAnyLoading ? 'Signing in...' : 'Sign in to Canteen Portal →'}
           </button>
         </form>
-
-        {/* Quick Demo Login */}
-        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
-          <button
-            type="button"
-            disabled={isAnyLoading}
-            onClick={handleQuickDemo}
-            style={{ width: '100%', backgroundColor: '#fff7ed', color: '#ea580c', border: '1px solid #ffedd5', borderRadius: '12px', padding: '10px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
-          >
-            ⚡ 1-Click Staff Login (main.canteen@nitjsr.ac.in)
-          </button>
-        </div>
       </div>
     </div>
   );

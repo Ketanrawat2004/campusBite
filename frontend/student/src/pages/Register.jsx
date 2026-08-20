@@ -5,6 +5,22 @@ import axiosClient, { warmupServer } from '../api/client';
 import { saveCachedHomeData } from './Home';
 import toast from 'react-hot-toast';
 
+function getPasswordStrength(pwd) {
+  let score = 0;
+  const checks = {
+    length:  (pwd || '').length >= 8,
+    upper:   /[A-Z]/.test(pwd || ''),
+    lower:   /[a-z]/.test(pwd || ''),
+    number:  /\d/.test(pwd || ''),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd || ''),
+  };
+  score = Object.values(checks).filter(Boolean).length;
+  if (score <= 2) return { label: 'Weak',   color: '#ef4444', width: '25%',  checks };
+  if (score === 3) return { label: 'Fair',   color: '#f97316', width: '50%',  checks };
+  if (score === 4) return { label: 'Good',   color: '#eab308', width: '75%',  checks };
+  return            { label: 'Strong', color: '#22c55e', width: '100%', checks };
+}
+
 export default function RegisterPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -13,6 +29,7 @@ export default function RegisterPage() {
   const [loadingMsg, setLoadingMsg] = useState('Creating your account...');
   const [error, setError] = useState('');
   const [hostels, setHostels] = useState([]);
+  const [showPwd, setShowPwd] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -24,6 +41,8 @@ export default function RegisterPage() {
     roomNumber: '',
     year: '1',
   });
+
+  const strength = getPasswordStrength(form.password);
 
   useEffect(() => {
     warmupServer();
@@ -67,8 +86,9 @@ export default function RegisterPage() {
       setError('College Email is required');
       return;
     }
-    if (!form.password || form.password.length < 8) {
-      setError('Password is required (minimum 8 characters)');
+    if (!strength.checks.length || !strength.checks.upper || !strength.checks.lower ||
+        !strength.checks.number || !strength.checks.special) {
+      setError('Password must meet all 5 strength requirements (8+ chars, uppercase, lowercase, number, special character)');
       return;
     }
     if (!form.phone.trim() || form.phone.replace(/\D/g, '').length < 10) {
@@ -195,14 +215,52 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Password * (min 8 chars)</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => update('password', e.target.value)}
-                placeholder="••••••••"
-                className="input text-xs sm:text-sm"
-              />
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Password *</label>
+              <div className="relative">
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => update('password', e.target.value)}
+                  placeholder="Min 8 chars, upper, lower, number, symbol"
+                  className="input pr-14 text-xs sm:text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs font-bold"
+                >
+                  {showPwd ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {form.password && (
+                <div className="mt-2 space-y-1.5 animate-fade-in">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Strength</span>
+                    <span className="font-bold" style={{ color: strength.color }}>{strength.label}</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{ width: strength.width, backgroundColor: strength.color }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 pt-1">
+                    {[
+                      ['8+ characters', strength.checks.length],
+                      ['Uppercase (A-Z)', strength.checks.upper],
+                      ['Lowercase (a-z)', strength.checks.lower],
+                      ['Number (0-9)', strength.checks.number],
+                      ['Special char (!@#…)', strength.checks.special],
+                    ].map(([label, ok]) => (
+                      <div key={label} className="flex items-center gap-1.5 text-[11px]" style={{ color: ok ? '#22c55e' : '#94a3b8' }}>
+                        <span>{ok ? '✓' : '○'}</span>
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp Mobile Number * (For Auto Bills)</label>

@@ -15,12 +15,17 @@ const registerSchema = Joi.object({
     'string.empty': 'Password is required',
   }),
   phone: Joi.string().allow('', null).optional(),
+  role: Joi.string().valid('STUDENT', 'CANTEEN_STAFF', 'ADMIN', 'DELIVERY_PARTNER').optional(),
   collegeId: Joi.string().hex().length(24).allow('', null).optional(),
   studentProfile: Joi.object({
     rollNumber: Joi.string().trim().allow('', null).optional(),
     hostelId: Joi.string().hex().length(24).allow('', null).optional(),
     roomNumber: Joi.string().trim().allow('', null).optional(),
     year: Joi.number().integer().min(1).max(6).allow('', null).optional(),
+  }).optional(),
+  canteenProfile: Joi.object({
+    canteenId: Joi.string().allow('', null).optional(),
+    role: Joi.string().allow('', null).optional(),
   }).optional(),
 });
 

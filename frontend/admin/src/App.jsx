@@ -241,16 +241,128 @@ function NavLink({ to, children }) {
   );
 }
 
-function AdminLoginPage({ onLogin }) {
-  const [email, setEmail] = useState('admin@campusbite.dev');
-  const [password, setPassword] = useState('Admin@123');
-  const [loading, setLoading] = useState(false);
+function getPasswordStrength(pwd) {
+  let score = 0;
+  const checks = {
+    length:  (pwd || '').length >= 8,
+    upper:   /[A-Z]/.test(pwd || ''),
+    lower:   /[a-z]/.test(pwd || ''),
+    number:  /\d/.test(pwd || ''),
+    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd || ''),
+  };
+  score = Object.values(checks).filter(Boolean).length;
+  if (score <= 2) return { label: 'Weak',   color: '#ef4444', width: '25%',  checks };
+  if (score === 3) return { label: 'Fair',   color: '#f97316', width: '50%',  checks };
+  if (score === 4) return { label: 'Good',   color: '#eab308', width: '75%',  checks };
+  return            { label: 'Strong', color: '#22c55e', width: '100%', checks };
+}
 
-  const handleSubmit = async (e) => {
+function AdminLoginPage({ onLogin }) {
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'forgot'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('Signing in...');
+
+  // Registration state
+  const [regForm, setRegForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  const [regShowPwd, setRegShowPwd] = useState(false);
+  const regStrength = getPasswordStrength(regForm.password);
+
+  // Forgot password state
+  const [forgotForm, setForgotForm] = useState({ email: '', newPassword: '', confirm: '' });
+  const [forgotShowPwd, setForgotShowPwd] = useState(false);
+  const [forgotDone, setForgotDone] = useState(false);
+  const forgotStrength = getPasswordStrength(forgotForm.newPassword);
+
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '362637227231-3gc8jb77hjelql3a4n5iva9222jrkph3.apps.googleusercontent.com';
+  const isAnyLoading = loading || googleLoading;
+
+  useEffect(() => {
+    if (!isAnyLoading) {
+      setLoadingMsg('Signing in...');
+      return;
+    }
+    const t1 = setTimeout(() => setLoadingMsg('Connecting to campus servers... Please wait'), 2500);
+    const t2 = setTimeout(() => setLoadingMsg('Loading Command Center... Almost ready! 🛡️'), 6000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isAnyLoading]);
+
+  const handleGoogleResponse = async (response) => {
+    if (!response || !response.credential) {
+      toast.error('Google credential not received. Please try again.');
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/auth/google`, {
+        idToken: response.credential,
+        role: 'ADMIN',
+      });
+      if (data.data?.user?.role !== 'ADMIN') {
+        toast.error('Access restricted to System Admin only');
+        return;
+      }
+      onLogin(data.data.accessToken, data.data.user);
+      toast.success(`Welcome, ${data.data.user.name.split(' ')[0]}! Logged into Admin Console 🛡️`);
+    } catch (err) {
+      console.error('Admin Google Auth Error:', err);
+      toast.error(err.response?.data?.error?.message || 'Google sign-in failed. Please use admin email & password.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authMode !== 'login') return;
+    if (!window.google?.accounts) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initGoogle;
+      document.head.appendChild(script);
+    } else {
+      initGoogle();
+    }
+
+    function initGoogle() {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleResponse,
+            auto_select: false,
+          });
+          const container = document.getElementById('admin-google-btn');
+          if (container) {
+            container.innerHTML = '';
+            const btnWidth = Math.min(360, Math.max(240, window.innerWidth - 64));
+            window.google.accounts.id.renderButton(container, {
+              theme: 'outline',
+              size: 'large',
+              width: btnWidth,
+              text: 'signin_with',
+              shape: 'rectangular',
+            });
+          }
+        } catch (e) {
+          console.error('Google accounts.id error:', e);
+        }
+      }
+    }
+  }, [GOOGLE_CLIENT_ID, authMode]);
+
+  const handleLogin = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     try {
-      const { data } = await axios.post(`${API_BASE}/auth/login`, { email, password });
+      const { data } = await axios.post(`${API_BASE}/auth/login`, { email: email.trim(), password });
       if (data.data.user.role !== 'ADMIN') {
         toast.error('Access restricted to System Admin only');
         return;
@@ -264,38 +376,398 @@ function AdminLoginPage({ onLogin }) {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!regForm.name.trim() || !regForm.email.trim()) {
+      toast.error('Full Name and Email are required');
+      return;
+    }
+    if (!regStrength.checks.length || !regStrength.checks.upper || !regStrength.checks.lower ||
+        !regStrength.checks.number || !regStrength.checks.special) {
+      toast.error('Password must meet all 5 strength requirements');
+      return;
+    }
+    if (regForm.password !== regForm.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        name: regForm.name.trim(),
+        email: regForm.email.trim().toLowerCase(),
+        password: regForm.password,
+        phone: regForm.phone.trim() || '9876543210',
+        role: 'ADMIN',
+      };
+      const { data } = await axios.post(`${API_BASE}/auth/register`, payload);
+      if (data.data?.accessToken && data.data?.user) {
+        onLogin(data.data.accessToken, data.data.user);
+        toast.success('Admin account created successfully! Welcome to Admin Console 🛡️');
+      } else {
+        toast.success('Admin registered! Please sign in.');
+        setAuthMode('login');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error?.message || 'Admin registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgot = async (e) => {
+    e.preventDefault();
+    if (!forgotForm.email.trim()) {
+      toast.error('Enter your admin email');
+      return;
+    }
+    if (!forgotStrength.checks.length || !forgotStrength.checks.upper || !forgotStrength.checks.lower ||
+        !forgotStrength.checks.number || !forgotStrength.checks.special) {
+      toast.error('Password must meet all 5 strength requirements');
+      return;
+    }
+    if (forgotForm.newPassword !== forgotForm.confirm) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await axios.post(`${API_BASE}/auth/forgot-password`, {
+        email: forgotForm.email.trim().toLowerCase(),
+        newPassword: forgotForm.newPassword,
+      });
+      setForgotDone(true);
+      toast.success(data.message || 'Password updated successfully! You can now sign in.');
+    } catch (err) {
+      toast.error(err.response?.data?.error?.message || 'Failed to update password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px', backgroundColor: '#f1f5f9' }}>
-      <div style={{ ...S.card, maxWidth: '420px', width: '100%', padding: window.innerWidth < 480 ? '20px' : '40px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', backgroundColor: '#f1f5f9' }}>
+      <div style={{ ...S.card, maxWidth: '440px', width: '100%', padding: window.innerWidth < 480 ? '24px 20px' : '36px', borderRadius: '24px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.06)' }}>
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '64px', height: '64px', objectFit: 'contain', margin: '0 auto 12px' }} />
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>Admin Console</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>CampusBite • NIT Jamshedpur</p>
+          <img src="/images/campusbite_logo.png" alt="CampusBite" style={{ width: '56px', height: '56px', objectFit: 'contain', margin: '0 auto 12px', borderRadius: '16px' }} />
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>
+            {authMode === 'login' && 'Admin Console'}
+            {authMode === 'register' && 'Create Admin Account'}
+            {authMode === 'forgot' && 'Reset Admin Password'}
+          </h1>
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+            {authMode === 'login' && 'CampusBite • NIT Jamshedpur Command Center'}
+            {authMode === 'register' && 'Register a new System Administrator account'}
+            {authMode === 'forgot' && 'Enter your email and choose a strong new password'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <label style={S.label}>Admin Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={S.input} required />
+        {/* Clean Loading State */}
+        {isAnyLoading && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px 14px', borderRadius: '12px', backgroundColor: '#fff7ed', border: '1px solid #fed7aa', color: '#9a3412', fontSize: '12px', fontWeight: '600', marginBottom: '16px' }}>
+            <div style={{ width: '14px', height: '14px', border: '2px solid #ea580c', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{loadingMsg}</span>
           </div>
-          <div>
-            <label style={S.label}>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={S.input} required />
-          </div>
-          <button type="submit" disabled={loading} style={S.btnPrimary}>
-            {loading ? 'Authenticating...' : 'Access Command Center →'}
-          </button>
-        </form>
+        )}
 
-        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
-          <button
-            type="button"
-            onClick={() => { setEmail('admin@campusbite.dev'); setPassword('Admin@123'); handleSubmit(); }}
-            style={{ width: '100%', backgroundColor: '#f8fafc', color: '#64748b', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '10px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-          >
-            🔑 Quick Login — admin@campusbite.dev
-          </button>
-        </div>
+        {/* ─── 1. LOGIN MODE ─── */}
+        {authMode === 'login' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Google Sign-In */}
+            <div style={{ opacity: isAnyLoading ? 0.6 : 1, pointerEvents: isAnyLoading ? 'none' : 'auto' }}>
+              <div id="admin-google-btn" style={{ display: 'flex', justifyContent: 'center', minHeight: '44px' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#e2e8f0' }} />
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>or sign in with password</span>
+                <div style={{ height: '1px', flex: 1, backgroundColor: '#e2e8f0' }} />
+              </div>
+            </div>
+
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={S.label}>Admin Email</label>
+                <input
+                  type="email"
+                  required
+                  disabled={isAnyLoading}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@nitjsr.ac.in"
+                  style={S.input}
+                />
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={S.label}>Password</label>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode('forgot')}
+                    disabled={isAnyLoading}
+                    style={{ background: 'none', border: 'none', color: '#ea580c', fontSize: '11px', fontWeight: '700', cursor: 'pointer', padding: 0 }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPwd ? 'text' : 'password'}
+                    required
+                    disabled={isAnyLoading}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{ ...S.input, paddingRight: '50px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd((v) => !v)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                  >
+                    {showPwd ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+              <button type="submit" disabled={isAnyLoading} style={{ ...S.btnPrimary, marginTop: '4px' }}>
+                {isAnyLoading ? 'Signing in...' : 'Access Command Center →'}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', paddingTop: '10px', borderTop: '1px solid #f1f5f9' }}>
+              <button
+                type="button"
+                onClick={() => setAuthMode('register')}
+                disabled={isAnyLoading}
+                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Need a new admin account? <strong style={{ color: '#ea580c' }}>Create Account →</strong>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── 2. REGISTER MODE ─── */}
+        {authMode === 'register' && (
+          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={S.label}>Full Name *</label>
+              <input
+                type="text"
+                required
+                disabled={isAnyLoading}
+                value={regForm.name}
+                onChange={(e) => setRegForm({ ...regForm, name: e.target.value })}
+                placeholder="Dr. Admin Name"
+                style={S.input}
+              />
+            </div>
+            <div>
+              <label style={S.label}>Admin Email *</label>
+              <input
+                type="email"
+                required
+                disabled={isAnyLoading}
+                value={regForm.email}
+                onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                placeholder="admin@nitjsr.ac.in"
+                style={S.input}
+              />
+            </div>
+            <div>
+              <label style={S.label}>Phone Number</label>
+              <input
+                type="tel"
+                disabled={isAnyLoading}
+                value={regForm.phone}
+                onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                placeholder="9876543210"
+                style={S.input}
+              />
+            </div>
+            <div>
+              <label style={S.label}>Password *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={regShowPwd ? 'text' : 'password'}
+                  required
+                  disabled={isAnyLoading}
+                  value={regForm.password}
+                  onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                  placeholder="Min 8 chars, upper, lower, number, symbol"
+                  style={{ ...S.input, paddingRight: '50px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRegShowPwd((v) => !v)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                  {regShowPwd ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {regForm.password && (
+                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                    <span style={{ color: '#94a3b8' }}>Strength</span>
+                    <span style={{ fontWeight: '700', color: regStrength.color }}>{regStrength.label}</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: regStrength.width, backgroundColor: regStrength.color, transition: 'all 0.3s' }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
+                    {[
+                      ['8+ chars', regStrength.checks.length],
+                      ['Uppercase (A-Z)', regStrength.checks.upper],
+                      ['Lowercase (a-z)', regStrength.checks.lower],
+                      ['Number (0-9)', regStrength.checks.number],
+                      ['Special (!@#…)', regStrength.checks.special],
+                    ].map(([lbl, ok]) => (
+                      <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
+                        <span>{ok ? '✓' : '○'}</span>
+                        <span>{lbl}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label style={S.label}>Confirm Password *</label>
+              <input
+                type="password"
+                required
+                disabled={isAnyLoading}
+                value={regForm.confirm}
+                onChange={(e) => setRegForm({ ...regForm, confirm: e.target.value })}
+                placeholder="••••••••"
+                style={S.input}
+              />
+            </div>
+
+            <button type="submit" disabled={isAnyLoading} style={{ ...S.btnPrimary, marginTop: '4px' }}>
+              {isAnyLoading ? 'Registering...' : 'Create Admin Account →'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAuthMode('login')}
+              style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
+            >
+              ← Already have an Admin account? Sign In
+            </button>
+          </form>
+        )}
+
+        {/* ─── 3. FORGOT PASSWORD MODE ─── */}
+        {authMode === 'forgot' && (
+          <div>
+            {forgotDone ? (
+              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', margin: '0 auto' }}>✅</div>
+                <div>
+                  <p style={{ fontWeight: '800', color: '#0f172a', fontSize: '16px', margin: 0 }}>Password Updated!</p>
+                  <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>Sign in to Admin Console with your new password.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('login'); setForgotDone(false); setForgotForm({ email: '', newPassword: '', confirm: '' }); }}
+                  style={S.btnPrimary}
+                >
+                  Sign In →
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={S.label}>Registered Admin Email *</label>
+                  <input
+                    type="email"
+                    required
+                    disabled={isAnyLoading}
+                    value={forgotForm.email}
+                    onChange={(e) => setForgotForm({ ...forgotForm, email: e.target.value })}
+                    placeholder="admin@nitjsr.ac.in"
+                    style={S.input}
+                  />
+                </div>
+
+                <div>
+                  <label style={S.label}>New Password *</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={forgotShowPwd ? 'text' : 'password'}
+                      required
+                      disabled={isAnyLoading}
+                      value={forgotForm.newPassword}
+                      onChange={(e) => setForgotForm({ ...forgotForm, newPassword: e.target.value })}
+                      placeholder="Min 8 chars, upper, lower, number, symbol"
+                      style={{ ...S.input, paddingRight: '50px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForgotShowPwd((v) => !v)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'none', color: '#64748b', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                    >
+                      {forgotShowPwd ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+
+                  {forgotForm.newPassword && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                        <span style={{ color: '#94a3b8' }}>Strength</span>
+                        <span style={{ fontWeight: '700', color: forgotStrength.color }}>{forgotStrength.label}</span>
+                      </div>
+                      <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: forgotStrength.width, backgroundColor: forgotStrength.color, transition: 'all 0.3s' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingTop: '4px' }}>
+                        {[
+                          ['8+ chars', forgotStrength.checks.length],
+                          ['Uppercase (A-Z)', forgotStrength.checks.upper],
+                          ['Lowercase (a-z)', forgotStrength.checks.lower],
+                          ['Number (0-9)', forgotStrength.checks.number],
+                          ['Special (!@#…)', forgotStrength.checks.special],
+                        ].map(([lbl, ok]) => (
+                          <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: ok ? '#16a34a' : '#94a3b8' }}>
+                            <span>{ok ? '✓' : '○'}</span>
+                            <span>{lbl}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={S.label}>Confirm New Password *</label>
+                  <input
+                    type="password"
+                    required
+                    disabled={isAnyLoading}
+                    value={forgotForm.confirm}
+                    onChange={(e) => setForgotForm({ ...forgotForm, confirm: e.target.value })}
+                    placeholder="••••••••"
+                    style={S.input}
+                  />
+                </div>
+
+                <button type="submit" disabled={isAnyLoading} style={{ ...S.btnPrimary, marginTop: '4px' }}>
+                  {isAnyLoading ? 'Updating…' : 'Update Password →'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMode('login')}
+                  style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: '600', cursor: 'pointer', paddingTop: '4px' }}
+                >
+                  ← Back to Admin Sign In
+                </button>
+              </form>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
